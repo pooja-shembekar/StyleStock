@@ -32,6 +32,67 @@ class ProductControllers {
       message: 'Product stock added successfully!',
       data: result
     });
+
+  });
+
+  getLowStock = asyncHandler(async (req, res) => {
+    const result = await this.services.getLowStock(req.user._id);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: 'Low stock variants retrieved successfully',
+      data: result
+    });
+  });
+
+  getStockMovements = asyncHandler(async (req, res) => {
+    const result = await this.services.getStockMovements(req.params.id, req.query, req.user._id);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: 'Product stock movements retrieved successfully',
+      meta: {
+        page: result.page,
+        limit: result.limit,
+        total: result.total,
+        totalPage: Math.ceil(result.total / result.limit),
+      },
+      data: result.data,
+    });
+  });
+
+  getNotes = asyncHandler(async (req, res) => {
+    const result = await this.services.getNotes(req.params.id, req.user._id);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: 'Product notes retrieved successfully',
+      data: result,
+    });
+  });
+
+  createNote = asyncHandler(async (req, res) => {
+    const result = await this.services.createNote(req.params.id, req.body.body, req.user._id);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.CREATED,
+      message: 'Product note created successfully',
+      data: result,
+    });
+  });
+
+  deleteNote = asyncHandler(async (req, res) => {
+    await this.services.deleteNote(req.params.id, req.params.noteId, req.user._id);
+
+    sendResponse(res, {
+      success: true,
+      statusCode: httpStatus.OK,
+      message: 'Product note deleted successfully',
+    });
   });
 
   /**
@@ -43,15 +104,18 @@ class ProductControllers {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 
+    const total = result?.totalCount[0]?.total || 0;
+    const safeLimit = limit > 0 ? limit : 10;
+
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
       message: 'All products retrieved successfully',
       meta: {
         page,
-        limit,
-        total: result?.totalCount[0]?.total || 0,
-        totalPage: Math.ceil(result?.totalCount[0]?.total / page)
+        limit: safeLimit,
+        total,
+        totalPage: Math.ceil(total / safeLimit) || 1
       },
       data: result.data
     });
@@ -62,12 +126,13 @@ class ProductControllers {
    */
   getTotalProduct = asyncHandler(async (req, res) => {
     const result = await this.services.countTotalProduct(req.user._id);
+    const payload = result[0] ?? { totalProducts: 0, totalQuantity: 0 };
 
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
       message: 'Count total products successfully',
-      data: result[0]
+      data: payload
     });
   });
 
@@ -89,7 +154,7 @@ class ProductControllers {
    * update product
    */
   update = asyncHandler(async (req, res) => {
-    const result = await this.services.update(req.params.id, req.body);
+    const result = await this.services.update(req.params.id, req.body, req.user._id);
 
     sendResponse(res, {
       success: true,
@@ -116,7 +181,7 @@ class ProductControllers {
    * delete multiple product
    */
   bulkDelete = asyncHandler(async (req, res) => {
-    await this.services.bulkDelete(req.body);
+    await this.services.bulkDelete(req.body, req.user._id);
 
     sendResponse(res, {
       success: true,

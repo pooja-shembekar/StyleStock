@@ -7,6 +7,8 @@
     "start": "node ./dist/server.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "build": "tsc",
+    "migrate:product-variants": "npm run build && node dist/scripts/migrateProductVariants.js",
+    "seed:style-stock-demo": "npm run build && node dist/scripts/seedFashionDemo.js",
     "lint": "eslint src --ignore-path .eslintignore --ext .ts",
     "lint:fix": "npx eslint src --fix",
     "format": "prettier --ignore-path .gitignore --write \"./src/**/*.+(js|ts|json)\"",

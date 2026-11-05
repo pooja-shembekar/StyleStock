@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="420" viewBox="0 0 360 420" fill="none">
+  <defs>
+    <linearGradient id="belt" x1="41" y1="119" x2="323" y2="291" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#81583D"/>
+      <stop offset=".55" stop-color="#4E3528"/>
+      <stop offset="1" stop-color="#936749"/>
+    </linearGradient>
+    <linearGradient id="background" x1="28" y1="13" x2="334" y2="407" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F2EFE9"/>
+      <stop offset="1" stop-color="#E3DDD2"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="420" rx="24" fill="url(#background)"/>
+  <ellipse cx="182" cy="319" rx="125" ry="14" fill="#453327" fill-opacity=".12"/>
+  <path d="M46 169c0-14 11-25 25-25h194c27 0 49 22 49 49v50c0 18-14 32-32 32H71c-14 0-25-11-25-25v-81Z" fill="url(#belt)"/>
+  <path d="M70 154h184c20 0 36 16 36 36v52c0 7-6 13-13 13H72c-7 0-13-6-13-13v-75c0-7 4-13 11-13Z" stroke="#C49A76" stroke-opacity=".65" stroke-width="3"/>
+  <path d="M183 169v100m-87-88v12m25-12v12m25-12v12m25-12v12m-75 63v-12m25 12v-12m25 12v-12m25 12v-12" stroke="#D3AF8B" stroke-opacity=".62" stroke-width="2"/>
+  <rect x="218" y="164" width="67" height="102" rx="12" fill="#C5C7C3" stroke="#737A79" stroke-width="4"/>
+  <path d="M232 177h38v76h-38z" fill="#777F7F"/>
+  <path d="M244 186v55m-14-28h29" stroke="#E4E3DE" stroke-width="4" stroke-linecap="round"/>
+  <path d="M42 195H28m14 18H26m17 18H29" stroke="#B98D68" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="77" cy="180" r="3" fill="#D7B691"/>
+  <circle cx="77" cy="244" r="3" fill="#D7B691"/>
+</svg>

@@ -14,6 +14,8 @@ export interface ITableSale {
     price: number;
   }
   productPrice: number;
+  variantSize?: string;
+  variantColor?: string;
   productName: string;
   quantity: number;
   buyerName: string;

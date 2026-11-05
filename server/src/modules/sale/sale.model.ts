@@ -5,6 +5,9 @@ const saleSchema = new Schema<ISale>(
   {
     user: { type: Schema.Types.ObjectId, required: true, ref: 'user' },
     product: { type: Schema.Types.ObjectId, required: true, ref: 'product' },
+    variantId: { type: Schema.Types.ObjectId, required: true },
+    variantSize: { type: String, required: true },
+    variantColor: { type: String, required: true },
     buyerName: { type: String, required: true },
     productName: { type: String, required: true },
     quantity: { type: Number, required: true },

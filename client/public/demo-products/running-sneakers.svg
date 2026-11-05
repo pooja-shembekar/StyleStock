@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="420" viewBox="0 0 360 420" fill="none">
+  <defs>
+    <linearGradient id="upper" x1="77" y1="147" x2="288" y2="292" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FAFAF8"/>
+      <stop offset="1" stop-color="#CFD7DB"/>
+    </linearGradient>
+    <linearGradient id="sole" x1="74" y1="280" x2="300" y2="319" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#D9E1E3"/>
+    </linearGradient>
+    <linearGradient id="backdrop" x1="35" y1="13" x2="324" y2="408" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EEF2F2"/>
+      <stop offset="1" stop-color="#DDE5E5"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="420" rx="24" fill="url(#backdrop)"/>
+  <ellipse cx="187" cy="324" rx="116" ry="17" fill="#51636B" fill-opacity=".14"/>
+  <path d="M64 265c24-10 42-29 54-57l20-48c5-13 16-21 29-20 11 1 18 7 25 17 20 29 44 44 79 51l43 9c15 3 25 17 23 32l-3 21H75c-12 0-19-3-19-10 0-6 3-10 8-12Z" fill="url(#upper)" stroke="#ABB8BD" stroke-width="3"/>
+  <path d="M69 269h259c7 0 12 6 11 13l-2 12c-1 9-9 15-18 15H87c-16 0-27-7-28-18l-2-10c-1-5 4-10 12-12Z" fill="url(#sole)" stroke="#AEBCC0" stroke-width="3"/>
+  <path d="m140 185 39 5M132 202l42 6M123 219l42 6" stroke="#9DAEB4" stroke-width="4" stroke-linecap="round"/>
+  <path d="m183 175 11 23-26 13 27 3-14 20 31-15 24 5c-17-12-29-28-37-40l-16-9Z" fill="#7EADA5"/>
+  <path d="M114 251c31 4 58 4 89 2m25 0c22 1 42 5 64 11" stroke="#BAC5C9" stroke-width="3" stroke-linecap="round"/>
+  <path d="m86 289 6 10m21-10 6 10m21-10 6 10m21-10 6 10m21-10 6 10m21-10 6 10m21-10 6 10m21-10 6 10" stroke="#C4CFD1" stroke-width="2" stroke-linecap="round"/>
+</svg>

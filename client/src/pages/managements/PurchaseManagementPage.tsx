@@ -7,11 +7,23 @@ import {
   useDeletePurchaseMutation,
   useGetAllPurchasesQuery,
 } from '../../redux/features/management/purchaseApi';
-import { IProduct } from '../../types/product.types';
 import { IPurchase } from '../../types/purchase.types';
 import formatDate from '../../utils/formatDate';
 import toastMessage from '../../lib/toastMessage';
 import SearchInput from '../../components/SearchInput';
+import { getApiErrorMessage } from '../../utils/apiError';
+
+interface PurchaseTableRow {
+  key: string;
+  sellerName: string;
+  productName: string;
+  variant: string;
+  price: number;
+  quantity: number;
+  totalPrice: number;
+  due: number;
+  date: string;
+}
 
 const PurchaseManagementPage = () => {
   const [query, setQuery] = useState({
@@ -26,10 +38,13 @@ const PurchaseManagementPage = () => {
     setQuery((prev) => ({ ...prev, page: page }));
   };
 
-  const tableData = data?.data?.map((purchase: IPurchase) => ({
+  const tableData: PurchaseTableRow[] | undefined = data?.data?.map((purchase: IPurchase) => ({
     key: purchase._id,
     sellerName: purchase.sellerName,
     productName: purchase.productName,
+    variant: purchase.variantSize && purchase.variantColor
+      ? `${purchase.variantSize} / ${purchase.variantColor}`
+      : 'Legacy stock',
     price: purchase.unitPrice,
     quantity: purchase.quantity,
     totalPrice: purchase.totalPrice,
@@ -37,7 +52,7 @@ const PurchaseManagementPage = () => {
     date: formatDate(purchase.createdAt),
   }));
 
-  const columns: TableColumnsType<any> = [
+  const columns: TableColumnsType<PurchaseTableRow> = [
     {
       title: 'Seller Name',
       key: 'sellerName',
@@ -47,6 +62,11 @@ const PurchaseManagementPage = () => {
       title: 'Product Name',
       key: 'productName',
       dataIndex: 'productName',
+    },
+    {
+      title: 'Variant',
+      key: 'variant',
+      dataIndex: 'variant',
     },
     {
       title: 'Price(per unit)',
@@ -121,7 +141,7 @@ const PurchaseManagementPage = () => {
 /**
  * Update Modal
  */
-const UpdateModal = ({ product }: { product: IProduct }) => {
+const UpdateModal = ({ product }: { product: PurchaseTableRow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { handleSubmit } = useForm();
 
@@ -173,9 +193,9 @@ const DeleteModal = ({ id }: { id: string }) => {
         toastMessage({ icon: 'success', text: res.message });
         handleCancel();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       handleCancel();
-      toastMessage({ icon: 'error', text: error.data.message });
+      toastMessage({ icon: 'error', text: getApiErrorMessage(error, 'Unable to delete purchase') });
     }
   };
 

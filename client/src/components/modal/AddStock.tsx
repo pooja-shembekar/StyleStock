@@ -1,6 +1,8 @@
-import { Button, Col, Flex, Modal, Row } from 'antd';
+import { Button, Flex, Modal } from 'antd';
 import { ChangeEvent, useEffect, useState } from 'react';
 import toastMessage from '../../lib/toastMessage';
+import { getApiErrorMessage } from '../../utils/apiError';
+import { useAddStockMutation } from '../../redux/features/management/productApi';
 import { useAppDispatch, useAppSelector } from '../../redux/hooks';
 import {
   getCreateVariantModel,
@@ -8,113 +10,72 @@ import {
   toggleCreateVariantModel,
 } from '../../redux/services/modal.Slice';
 import { IProduct } from '../../types/product.types';
-import ModalInput from './ModalInput';
-import { useCreateNewProductMutation } from '../../redux/features/management/productApi';
 
 const AddStockModal = () => {
   const modalOpen = useAppSelector(getCreateVariantModel);
-  const data = useAppSelector(getCreateVariantModelData);
-  const [createVariant] = useCreateNewProductMutation();
+  const data = useAppSelector(getCreateVariantModelData) as IProduct | null;
+  const [addStock, { isLoading }] = useAddStockMutation();
   const dispatch = useAppDispatch();
-  const [updateDate, setUpdateDate] = useState<Partial<IProduct>>();
+  const [variantId, setVariantId] = useState('');
+  const [quantity, setQuantity] = useState('');
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setUpdateDate((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  useEffect(() => {
+    setVariantId(data?.variants?.[0]?._id || '');
+    setQuantity('');
+  }, [data]);
+
+  const close = () => dispatch(toggleCreateVariantModel({ open: false, data: null }));
 
   const onSubmit = async () => {
-    const payload: any = { ...updateDate };
-    payload.price = Number(updateDate?.price);
-    payload.stock = Number(updateDate?.stock);
-    delete payload?._id;
-    delete payload.createdAt;
-    delete payload?.updatedAt;
-    delete payload?.__v;
-    delete payload?.user;
+    const stock = Number(quantity);
+    if (!data?._id || !variantId || !Number.isInteger(stock) || stock < 1) {
+      toastMessage({ icon: 'error', text: 'Select a variant and enter a positive whole-number quantity.' });
+      return;
+    }
 
     try {
-      const res = await createVariant(payload).unwrap();
-      console.log(res);
-
-      if (res.statusCode === 201) {
+      const res = await addStock({ id: data._id, payload: { variantId, stock } }).unwrap();
+      if (res.statusCode === 200) {
         toastMessage({ icon: 'success', text: res.message });
-        dispatch(toggleCreateVariantModel({ open: false, data: null }));
+        close();
       }
-    } catch (error: any) {
-      toastMessage({ icon: 'error', title: error.data.message, text: error.data.errors[0] });
+    } catch (error: unknown) {
+      toastMessage({ icon: 'error', text: getApiErrorMessage(error, 'Unable to add stock') });
     }
   };
 
-  useEffect(() => {
-    setUpdateDate(data!);
-  }, [data]);
-
   return (
-    <>
-      <Modal
-        title='Add Stock'
-        centered
-        open={modalOpen}
-        onOk={() => dispatch(toggleCreateVariantModel({ open: false, data: null }))}
-        onCancel={() => dispatch(toggleCreateVariantModel({ open: false, data: null }))}
-        footer={[
-          <Button
-            key='back'
-            onClick={() => dispatch(toggleCreateVariantModel({ open: false, data: null }))}
-          >
-            Close
-          </Button>,
-        ]}
-      >
-        <form>
-          <ModalInput
-            handleChange={handleChange}
-            name='name'
-            defaultValue={updateDate?.name}
-            label='Name'
-          />
-          <ModalInput
-            handleChange={handleChange}
-            label='Price'
-            type='number'
-            defaultValue={updateDate?.price}
-            name='price'
-          />
-          <ModalInput
-            handleChange={handleChange}
-            label='Quantity'
-            type='number'
-            name='quantity'
-            defaultValue={updateDate?.stock}
-          />
-          <Row>
-            <Col span={6}>
-              <label htmlFor='Size' className='label'>
-                Size
-              </label>
-            </Col>
-            <Col span={18}>
-              <select
-                defaultValue={updateDate?.size}
-                value={updateDate?.size}
-                onChange={handleChange}
-                className={`input-field`}
-              >
-                <option value=''>Select Product Size*</option>
-                <option value='SMALL'>Small</option>
-                <option value='MEDIUM'>Medium</option>
-                <option value='LARGE'>Large</option>
-              </select>
-            </Col>
-          </Row>
-          <Flex justify='center' style={{ margin: '1rem' }}>
-            <Button key='submit' type='primary' onClick={onSubmit}>
-              Create New Variant
-            </Button>
-          </Flex>
-        </form>
-      </Modal>
-    </>
+    <Modal title='Add stock' centered open={modalOpen} onCancel={close} footer={<Button onClick={close}>Close</Button>}>
+      <form onSubmit={(event) => { event.preventDefault(); void onSubmit(); }}>
+        <label htmlFor='stock-variant' className='label'>Variant</label>
+        <select
+          id='stock-variant'
+          className='input-field'
+          value={variantId}
+          onChange={(event: ChangeEvent<HTMLSelectElement>) => setVariantId(event.target.value)}
+        >
+          <option value=''>Select size / colour</option>
+          {data?.variants?.map((variant) => (
+            <option value={variant._id} key={variant._id}>{variant.size} / {variant.color}</option>
+          ))}
+        </select>
+        <label htmlFor='stock-quantity' className='label'>Quantity</label>
+        <input
+          id='stock-quantity'
+          type='number'
+          min='1'
+          step='1'
+          className='input-field'
+          value={quantity}
+          onChange={(event) => setQuantity(event.target.value)}
+        />
+        <Flex justify='center' style={{ margin: '1rem' }}>
+          <Button htmlType='submit' type='primary' loading={isLoading} disabled={!data?.variants?.length}>
+            Add stock
+          </Button>
+        </Flex>
+      </form>
+    </Modal>
   );
 };
 

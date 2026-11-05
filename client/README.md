@@ -30,7 +30,11 @@
 
   ```bash
       VITE_BASE_URL=http://localhost:5000/api/v1
+      VITE_CLOUDINARY_CLOUD_NAME=your_cloud_name
+      VITE_CLOUDINARY_UPLOAD_PRESET=your_unsigned_upload_preset
   ```
+
+  Product image uploads require the Cloudinary cloud name and an unsigned upload preset. Create/select an **unsigned** preset in Cloudinary's Upload settings and configure its permitted formats, size limits, and optional `inventory/products` folder policy as appropriate. These values are public frontend configuration; never put a Cloudinary API secret in a `VITE_` variable. Restart the Vite server after changing `.env`.
 
 - Step 2: install all the dependencies using the command
   ```bash

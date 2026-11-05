@@ -11,6 +11,6 @@ purchaseRoutes.use(verifyAuth);
 purchaseRoutes.post('/', validateRequest(purchaseValidator.createSchema), purchaseController.create);
 purchaseRoutes.get('/', purchaseController.getAll);
 purchaseRoutes.delete('/:id', purchaseController.delete);
-purchaseRoutes.patch('/:id', validateRequest(purchaseValidator.updateSchema), purchaseController.create);
+purchaseRoutes.patch('/:id', validateRequest(purchaseValidator.updateSchema), purchaseController.update);
 
 export default purchaseRoutes;

@@ -25,15 +25,18 @@ class PurchaseController {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 
+    const total = result?.totalCount || 0;
+    const safeLimit = limit > 0 ? limit : 10;
+
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
       message: 'Purchase retrieved successfully!',
       meta: {
         page,
-        limit,
-        total: result?.totalCount || 0,
-        totalPage: Math.ceil(result?.totalCount / limit)
+        limit: safeLimit,
+        total,
+        totalPage: Math.ceil(total / safeLimit) || 1
       },
       data: result.data
     });
@@ -41,7 +44,7 @@ class PurchaseController {
 
   // update
   update = asyncHandler(async (req, res) => {
-    const result = await this.services.update(req.params.id, req.body);
+    const result = await this.services.update(req.params.id, req.body, req.user._id);
 
     sendResponse(res, {
       success: true,

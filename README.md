@@ -1,386 +1,255 @@
-# 📦 Inventory Management System
+# StyleStock
 
-A modern, full-stack inventory management system built with the MERN stack and contemporary UI/UX design.
+StyleStock is a fashion and lifestyle inventory management application for tracking products, size and colour variants, stock, purchases, and sales. It helps retail teams monitor variant-level inventory and spot low or depleted stock. The application is built on the MERN stack and extends and customizes an existing open-source inventory system.
 
----
+## Features
 
-## 🚀 Quick Start (One Click!)
+- **Authentication and profiles:** Register, sign in, and log out; protected application pages use JWT authentication. Manage your profile and password.
+- **Product management:** Create, view, update, and delete products; organize them by category and brand; search, filter, and paginate the product list; and mark products active or inactive.
+- **Variant inventory:** Track stock by size and colour, set a low-stock threshold per variant, and optionally enter an SKU. Total product stock is calculated from its variants. SKUs are saved when entered but are not generated automatically, and uniqueness is not enforced.
+- **Product details:** Open a product details modal to view product and variant information, browse a gallery of up to 12 images, add images through Cloudinary, clone a product, review paginated stock movement history, and keep product notes.
+- **Purchases and sales:** Add stock or record a sale for a selected variant. The API updates variant inventory transactionally and records stock movements; sales are rejected when stock is insufficient. Purchase and sale lists support search and pagination, and records can be deleted. Edit controls are present in the UI, but their forms do not currently save changes.
+- **Dashboard:** View total stock, sales and revenue summaries, daily and monthly charts, and low-stock/out-of-stock variant alerts.
 
-### Windows Users
+## Screenshots
 
-Double-click one of these files in the project root:
+The following screenshot files are **not present yet**. Capture the application and save your own screenshots at these paths:
 
-- **`start.bat`** - Recommended for most Windows users
-- **`start.ps1`** - For PowerShell users
+- `asset/screenshots/dashboard.png`
+- `asset/screenshots/products.png`
+- `asset/screenshots/product-details.png`
+- `asset/screenshots/sales.png`
 
-### Mac/Linux Users
+Once the files exist, add them to the README with relative image links, for example:
 
-Run in terminal from project root:
-```bash
-bash start.sh
+```markdown
+![StyleStock dashboard](asset/screenshots/dashboard.png)
+![Product inventory](asset/screenshots/products.png)
+![Product details](asset/screenshots/product-details.png)
+![Sales management](asset/screenshots/sales.png)
 ```
 
-> **That's it!** The system will automatically:
-> - Install dependencies for both client and server
-> - Start the backend on `http://localhost:5000`
-> - Start the frontend on `http://localhost:5173`
-> - Open both in separate terminal windows
+## Technology
 
-#### Default Login Credentials
-- 📧 **Email:** `test-visitor@gmail.com`
-- 🔑 **Password:** `pass123`
+| Area              | Technologies                                                                |
+| ----------------- | --------------------------------------------------------------------------- |
+| Frontend          | React 18, TypeScript, Vite, Redux Toolkit / RTK Query, Ant Design, Recharts |
+| Backend           | Node.js, Express, TypeScript, Mongoose, Zod                                 |
+| Data and services | MongoDB, JWT, bcrypt, Cloudinary image uploads                              |
 
----
+## Architecture
 
-## 📋 Prerequisites
+The React single-page application in `client/` calls the Express REST API in `server/` under `/api/v1`. RTK Query manages API requests and cache state; the API uses Mongoose to read and write MongoDB documents. JWTs are sent in the `Authorization` header for authenticated requests. Product images are uploaded directly from the browser to Cloudinary; the resulting image URLs are saved with the product through the API.
 
-Before running the system, ensure you have:
+## Project structure
 
-- ✅ **Node.js** (v16 or higher) - [Download](https://nodejs.org/)
-- ✅ **npm** (comes with Node.js)
-- ✅ **MongoDB** (Atlas or Local) - Free tier: [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
-
-**Optional but Recommended:**
-- Git for version control
-- VS Code for development
-
----
-
-## 🛠️ Manual Setup (Advanced)
-
-If you prefer to set up manually or customize the setup:
-
-### Backend Setup
-
-```bash
-# Navigate to server directory
-cd server
-
-# Install dependencies
-npm install
-
-# Create .env file (template provided in .env.default)
-# Add your MongoDB connection string and JWT secret
-
-# Start development server
-npm run dev
-
-# Server runs on http://localhost:5000
-```
-
-### Frontend Setup
-
-```bash
-# Navigate to client directory
-cd client
-
-# Install dependencies
-npm install
-
-# Create .env file (template provided in .env.default)
-# VITE_BASE_URL=http://localhost:5000
-
-# Start development server
-npm run dev
-
-# Frontend runs on http://localhost:5173
-```
-
----
-
-## 🎨 Modern UI/UX Features
-
-This system has been recently modernized with:
-
-- ✨ Beautiful gradient backgrounds
-- 🎨 Professional color scheme
-- ⚡ Smooth animations and transitions
-- 📱 Fully responsive design
-- ♿ Improved accessibility
-- 🎯 Icon-enhanced forms
-- 📊 Modern card-based layouts
-
-See **[MODERNIZATION_GUIDE.md](./MODERNIZATION_GUIDE.md)** for detailed design improvements.
-
----
-
-## 📚 Technology Stack
-
-### Backend
-- **Runtime:** Node.js with TypeScript
-- **Framework:** Express.js
-- **Database:** MongoDB with Mongoose ORM
-- **Authentication:** JWT
-- **Validation:** Zod
-- **Logging:** Morgan
-
-### Frontend
-- **Framework:** React 18 with TypeScript
-- **State Management:** Redux Toolkit
-- **UI Library:** Ant Design v5
-- **Styling:** Modern CSS with Tailwind utilities
-- **HTTP Client:** Redux Query
-- **Forms:** React Hook Form
-- **Charting:** Recharts
-- **Alerts:** SweetAlert2 & Sonner
-
----
-
-## ✨ Core Features
-
-### 1. **Authentication**
-- User registration and login
-- JWT-based authentication
-- Password hashing with bcrypt
-- Profile management
-
-### 2. **Product Management**
-- Create, read, update, delete products
-- Product categories and brands
-- Product variants
-- Inventory tracking
-- Search and filtering
-
-### 3. **Sales Management**
-- Record sales transactions
-- Update and delete sales records
-- Sales analytics
-
-### 4. **Purchase Management**
-- Track purchases
-- Manage purchase records
-- Purchase history
-
-### 5. **Seller Management**
-- Create and manage sellers
-- Seller information
-- Sales attribution
-
-### 6. **Dashboard Analytics**
-- Total stock overview
-- Sales statistics
-- Revenue tracking
-- Daily/Monthly/Weekly/Yearly sales reports
-- Interactive charts
-
-### 7. **User Profile**
-- Edit profile information
-- Change password
-- Personal dashboard
-
----
-
-## 📁 Project Structure
-
-```
-inventory-management-system/
-├── client/                 # React Frontend
-│   ├── src/
-│   │   ├── components/    # Reusable components
-│   │   ├── pages/         # Page components
-│   │   ├── redux/         # Redux store & slices
-│   │   ├── lib/           # Utility libraries
-│   │   └── styles/        # Global styles
+```text
+.
+├── asset/                    # Existing image assets
+│   ├── 1.png ... 5.png
+│   └── extends.md
+├── client/                   # Main React + Vite frontend
+│   ├── public/                # Static files and demo product images
+│   │   └── demo-products/
+│   └── src/
+│       ├── components/        # UI, product details, tables, charts, modals
+│       ├── pages/             # Dashboard, product, purchase, sale, profile, auth
+│       ├── redux/             # Store, slices, and RTK Query services
+│       ├── routes/
+│       ├── types/
+│       └── utils/
+├── next-client/               # Separate Next.js frontend workspace
+│   ├── app/
+│   ├── components/
+│   ├── features/
+│   ├── actions/
 │   └── package.json
-│
-├── server/                # Express Backend
-│   ├── src/
-│   │   ├── modules/       # Feature modules
-│   │   ├── routes/        # API routes
-│   │   ├── middlewares/   # Custom middlewares
-│   │   ├── config/        # Configuration
-│   │   └── server.ts      # Entry point
-│   └── package.json
-│
-├── start.bat             # Windows startup script
-├── start.ps1             # PowerShell startup script
-├── start.sh              # Mac/Linux startup script
-└── README.md             # This file
+├── server/                    # Express + TypeScript API
+│   └── src/
+│       ├── config/
+│       ├── middlewares/
+│       ├── modules/            # User, product, category, brand, seller, purchase, sale
+│       ├── routes/
+│       └── scripts/
+├── start.bat                  # Windows Command Prompt starter
+├── start.ps1                  # PowerShell starter
+└── start.sh                   # macOS/Linux starter
 ```
 
----
+The Windows and shell starter scripts launch `client/` and `server/`; they do not configure environment variables. `next-client/` is a separate Next.js workspace and is not launched by these scripts.
 
-## 🔧 Available Commands
+## Prerequisites
 
-### Client
+- Node.js 18.x, 20.x, or 22+ (as allowed by the installed Vite version), plus npm
+- MongoDB locally or a MongoDB Atlas database
+- A Cloudinary account and an **unsigned upload preset** if you want to use product image uploads
 
-```bash
-cd client
+The API uses MongoDB transactions for some inventory operations. A local MongoDB server must be configured as a replica set for those operations; MongoDB Atlas is another option.
 
-npm run dev       # Start development server
-npm run build     # Build for production
-npm run lint      # Run ESLint
-npm run preview   # Preview production build
+## Installation and setup
+
+### 1. Configure the backend
+
+From the repository root, open PowerShell:
+
+```powershell
+Set-Location .\server
+if (-not (Test-Path .env)) { Copy-Item .env.default .env }
+notepad .env
 ```
 
-### Server
-
-```bash
-cd server
-
-npm run dev       # Start with ts-node-dev
-npm run build     # Compile TypeScript
-npm start         # Run compiled JavaScript
-npm run lint      # Run ESLint
-npm run format    # Format code with Prettier
-```
-
----
-
-## ⚙️ Environment Variables
-
-### Server (.env)
+Set the values using your own local database or Atlas connection string:
 
 ```env
 NODE_ENV=development
 PORT=5000
-DATABASE_URL=mongodb+srv://username:password@cluster.mongodb.net/inventory
-JWT_SECRET=your-super-secret-key-change-this-in-production
+DATABASE_URL=mongodb://127.0.0.1:27017/stylestock
+JWT_SECRET=replace-with-a-long-random-secret
 ```
 
-### Client (.env)
+Install dependencies and run the API in this terminal:
+
+```powershell
+npm install
+npm run dev
+```
+
+The API listens on the configured `PORT` after it connects to MongoDB.
+
+### 2. Configure and run the frontend
+
+Open a second PowerShell window at the repository root:
+
+```powershell
+Set-Location .\client
+if (-not (Test-Path .env)) { Copy-Item .env.example .env }
+notepad .env
+```
+
+Configure:
 
 ```env
-VITE_BASE_URL=http://localhost:5000
+VITE_BASE_URL=http://localhost:5000/api/v1
+VITE_CLOUDINARY_CLOUD_NAME=
+VITE_CLOUDINARY_UPLOAD_PRESET=
 ```
 
-> **⚠️ Security Note:** Never commit `.env` files to version control. Use `.env.default` as a template.
+Image upload needs the Cloudinary settings described in [Environment variables](#environment-variables). Restart Vite after setting or changing them.
 
----
+Then start the frontend:
 
-## 🚨 Troubleshooting
-
-### "Port 5000 already in use"
-```bash
-# Windows
-lsof -i :5000          # Find process using port 5000
-taskkill /PID <PID> /F # Kill the process
-
-# Mac/Linux
-lsof -i :5000 | grep LISTEN
-kill -9 <PID>
-```
-
-### "Cannot find module" error
-```bash
-# Clear node_modules and reinstall
-rm -rf node_modules
-npm install
-```
-
-### "MongoDB connection failed"
-- Verify MongoDB is running locally or MongoDB Atlas connection string is correct
-- Check `.env` file has correct `DATABASE_URL`
-- Ensure your IP is whitelisted in MongoDB Atlas
-
-### Startup script not running
-```bash
-# Run manually for detailed error messages
-cd server
-npm install
-npm run dev
-
-# In another terminal
-cd client
+```powershell
 npm install
 npm run dev
 ```
 
----
+Open the local URL printed by Vite (normally `http://localhost:5173`).
 
-## 📊 Pages & Routes
+### Optional startup scripts
 
-| Page | Route | Description |
-|------|-------|-------------|
-| Dashboard | `/` | Main analytics dashboard |
-| Products | `/management/products` | Manage inventory products |
-| Sales | `/management/sales` | Track sales records |
-| Purchases | `/management/purchases` | Manage purchases |
-| Sellers | `/management/sellers` | Manage sellers |
-| Sales History | `/sales-history` | Sales analytics by period |
-| Profile | `/profile` | User profile management |
-| Login | `/login` | User authentication |
-| Register | `/register` | Create new account |
+After both environment files are configured, run `.\start.bat` from the repository root in Command Prompt or `.\start.ps1` in PowerShell. These scripts install dependencies when `node_modules` is absent and open separate terminals for the API and frontend.
 
----
+## Environment variables
 
-## 🔐 Security Features
+The backend reads `server/.env` and the Vite frontend reads `client/.env`. Example templates are provided at `server/.env.default` and `client/.env.example`.
 
-- ✅ Password hashing with bcrypt
-- ✅ JWT token-based authentication
-- ✅ CORS enabled for API access
-- ✅ Express middleware for security
-- ✅ Input validation with Zod
-- ✅ Protected routes on frontend
-- ✅ HttpOnly cookies recommended for production
+### Backend
 
----
+| Variable       | Purpose                                                 |
+| -------------- | ------------------------------------------------------- |
+| `NODE_ENV`     | Runtime environment label                               |
+| `PORT`         | Port used by the API; the starter scripts expect `5000` |
+| `DATABASE_URL` | MongoDB connection string                               |
+| `JWT_SECRET`   | Private signing secret used to verify JWTs              |
 
-## 📈 Performance Optimizations
+Use your own local MongoDB or Atlas URI for `DATABASE_URL`, and a long random value for `JWT_SECRET`. Do not commit these values or share them publicly.
 
-- ✅ Lazy-loaded components
-- ✅ Optimized database queries
-- ✅ Redux for state management
-- ✅ Memoized components
-- ✅ Code splitting enabled
-- ✅ Minified production builds
-- ✅ Efficient API caching
+### Frontend
 
----
+| Variable                        | Purpose                                       |
+| ------------------------------- | --------------------------------------------- |
+| `VITE_BASE_URL`                 | API root URL, including `/api/v1`             |
+| `VITE_CLOUDINARY_CLOUD_NAME`    | Cloudinary cloud name used by browser uploads |
+| `VITE_CLOUDINARY_UPLOAD_PRESET` | Name of the Cloudinary unsigned upload preset |
 
-## 🤝 Contributing
+Frontend uploads require a Cloudinary account, its cloud name, and an unsigned upload preset configured in the Cloudinary dashboard. Set the preset name in `VITE_CLOUDINARY_UPLOAD_PRESET`. The app uploads image files directly to Cloudinary and saves the returned secure image URL with the product through the API. Client-side upload validation limits each file to 10 MB and each product to 12 images.
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-4. Open a Pull Request
+All `VITE_` values are included in browser code and are public configuration, not secrets. Never put a Cloudinary API secret in a frontend variable. Configure suitable format and size restrictions on the unsigned preset. Restart Vite after changing frontend environment variables.
 
----
+## Available npm commands
 
-## 📝 License
+Run each command from its package directory.
 
-This project is licensed under the MIT License - see the [LICENSE](./LICENSE) file for details.
+### `client/`
 
----
+| Command           | Purpose                                           |
+| ----------------- | ------------------------------------------------- |
+| `npm run dev`     | Start the Vite development server                 |
+| `npm run build`   | Type-check and create a production frontend build |
+| `npm run preview` | Preview the production build locally              |
+| `npm run lint`    | Run ESLint                                        |
 
-## 👨‍💻 Author
+### `server/`
 
-**Original Author:** [mhShohan](https://github.com/mhShohan)
+| Command                            | Purpose                                      |
+| ---------------------------------- | -------------------------------------------- |
+| `npm run dev`                      | Start the TypeScript API in development      |
+| `npm run build`                    | Compile TypeScript to `dist/`                |
+| `npm start`                        | Run the compiled API (`npm run build` first) |
+| `npm run lint`                     | Run ESLint                                   |
+| `npm run lint:fix`                 | Apply ESLint fixes                           |
+| `npm run format`                   | Format server source files                   |
+| `npm run format:fix`               | Format the server source directory           |
+| `npm run migrate:product-variants` | Build and run the product-variant migration  |
+| `npm run seed:style-stock-demo`    | Build and run the StyleStock demo-data seed  |
 
-**Modernization & One-Click Setup:** April 2026
+The migration and seed commands connect to the database selected by `DATABASE_URL`; use them only when you intend to change that database. Automated tests are not currently configured in the client or server package, and no test/spec files are present. `next-client/` is a separate Next.js workspace, not used by the root startup scripts or the main setup above.
 
----
+## How to use
 
-## 🔗 Resources
+1. Register an account from the application and sign in.
+2. In product creation, add a seller and category if needed. A seller and category are required for each product; a brand is optional.
+3. Enter product information and add one or more size/colour variants. Set each variant's starting stock and low-stock threshold; an SKU can be entered optionally.
+4. Open the saved product's details modal and upload product images if Cloudinary is configured.
+5. To receive stock, use the product management **Add stock** action on the relevant variant. This increases that variant's inventory and creates a purchase and stock-movement record.
+6. To sell an item, use the product management **Sell** action and select the variant and quantity. The sale is rejected if the selected variant does not have enough stock.
+7. Review purchase and sale records in their management pages. Deletion is available; editing controls are not fully wired to save changes.
+8. Use the product details modal to review stock movement history, and check the dashboard for totals, charts, and low-stock or out-of-stock variants.
 
-- [MERN Stack Documentation](https://mern.io/)
-- [React Documentation](https://react.dev/)
-- [Express.js Guide](https://expressjs.com/)
-- [MongoDB Documentation](https://docs.mongodb.com/)
-- [Ant Design Components](https://ant.design/components/overview/)
-- [Redux Toolkit](https://redux-toolkit.js.org/)
+## Troubleshooting
 
----
+- **API cannot connect to MongoDB:** Check that MongoDB is running and `server\.env` contains a valid `DATABASE_URL`. If a transaction-related error appears with local MongoDB, configure it as a replica set or use Atlas.
+- **Frontend API requests fail:** Confirm the API is running and `VITE_BASE_URL` is `http://localhost:5000/api/v1` (or matches your configured API host and port). Restart the Vite process after editing `client\.env`.
+- **Image upload is unavailable:** Confirm both Cloudinary frontend variables are set, the cloud name is correct, and the unsigned preset permits the selected image type and size. Restart Vite after changing the variables.
+- **A port is already in use:** In PowerShell, identify the process ID with:
 
-## 📞 Support
+  ```powershell
+  netstat -ano | findstr :5000
+  netstat -ano | findstr :5173
+  ```
 
-Having issues? Follow these steps:
+  Stop only the process using the conflicting port, or change the backend `PORT` and corresponding frontend `VITE_BASE_URL`.
 
-1. Check [Troubleshooting](#troubleshooting) section
-2. Verify all prerequisites are installed
-3. Check `.env` files are configured correctly
-4. Review application logs in terminal
-5. Clear browser cache and restart servers
+- **Dependencies are missing or inconsistent:** Run `npm install` again from the affected package directory (`server/` or `client/`).
+- **API configuration appears ignored:** Confirm the backend file is `server\.env`, the frontend file is `client\.env`, and that each variable name matches the examples above. Stop and restart the relevant development process after changes.
 
----
+## Security notes
 
-## 🎯 Next Steps
+- Passwords are hashed with bcrypt; authenticated API routes use JWT bearer tokens.
+- The frontend sends JWTs in the `Authorization` header. The application does not implement HttpOnly-cookie authentication.
+- Never commit `.env` files or share database credentials or `JWT_SECRET`. Keep all `VITE_` values public; they are bundled into frontend code.
+- The API's CORS allowlist in `server/src/app.ts` currently permits `http://localhost:5173`, `http://localhost:3000`, and `https://inventory-navy.vercel.app`. Update the source allowlist when using another frontend origin.
+- Cloudinary uploads use a browser-side unsigned preset. Configure that preset with appropriate upload restrictions; do not expose Cloudinary API secrets in the client.
+- This README does not certify the project as production-hardened. Review authentication, CORS, secrets, upload restrictions, and database access for your deployment.
 
-1. **Customize Database:** Update MongoDB connection in `.env`
-2. **Change JWT Secret:** Update `JWT_SECRET` for production
-3. **Customize Branding:** Update app title and logo
-4. **Add More Features:** Extend the modular backend/frontend
-5. **Deploy:** Push to Vercel (frontend) and Heroku/Railway (backend)
+## Future improvements
 
----
+- Add automated unit and integration tests.
+- Document API request and response schemas.
+- Complete the purchase and sale record editing workflows in the UI (API update routes exist, but the current edit forms do not submit changes).
+- Add deployment-specific configuration and operational monitoring.
+- Consider server-mediated, signed image uploads if the deployment requires them.
+
+## Attribution and license
+
+StyleStock extends and customizes the open-source [inventory-management-system by mhShohan](https://github.com/mhShohan/inventory-management-system). The upstream project is distributed under the **MIT License**, with the notice `Copyright (c) 2024 Mehdi Hasan Shohan`. See the [upstream MIT license](https://github.com/mhShohan/inventory-management-system/blob/main/LICENSE) and retain its notice and terms for reused portions.

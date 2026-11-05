@@ -33,25 +33,25 @@ const Sidebar = () => {
         }}
         width='260px'
         style={{
-          background: 'linear-gradient(135deg, #164863 0%, #1a5276 100%)',
+          background: 'linear-gradient(135deg, #172033 0%, #1c2740 100%)',
           position: 'relative',
-          boxShadow: '2px 0 8px rgba(0, 0, 0, 0.1)',
+          boxShadow: '12px 0 30px rgba(23, 32, 51, 0.12)',
         }}
       >
-        <div style={{padding: '1.5rem 1rem', borderBottom: '1px solid rgba(255,255,255,0.1)'}}>
+        <div style={{padding: '1.75rem 1rem 1.25rem', borderBottom: '1px solid rgba(255,255,255,0.08)'}}>
           <h1 style={{
-            color: '#fff',
-            fontSize: '1.5rem',
-            fontWeight: 700,
+            color: '#FFFFFF',
+            fontSize: '1.65rem',
+            fontWeight: 800,
             textAlign: 'center',
             margin: 0,
-            letterSpacing: '0.5px',
+            letterSpacing: '0.08em',
             textTransform: 'uppercase',
           }}>
-            📦 Inventory
+            StyleStock
           </h1>
-          <p style={{color: 'rgba(255,255,255,0.7)', textAlign: 'center', margin: '0.5rem 0 0 0', fontSize: '0.85rem'}}>
-            Management System
+          <p style={{color: 'rgba(255,255,255,0.72)', textAlign: 'center', margin: '0.5rem 0 0 0', fontSize: '0.82rem', letterSpacing: '0.12em', textTransform: 'uppercase'}}>
+            Fashion retail OS
           </p>
         </div>
         <Menu
@@ -59,9 +59,11 @@ const Sidebar = () => {
           mode='inline'
           style={{
             background: 'transparent',
-            fontWeight: 600,
+            fontWeight: 700,
             border: 'none',
             marginTop: '1rem',
+            fontSize: '0.82rem',
+            letterSpacing: '0.04em',
           }}
           defaultSelectedKeys={['Dashboard']}
           items={sidebarItems}
@@ -75,19 +77,20 @@ const Sidebar = () => {
               display: 'flex',
               width: '100%',
               justifyContent: 'center',
-              background: 'linear-gradient(180deg, transparent, rgba(0,0,0,0.1))',
-              borderTop: '1px solid rgba(255,255,255,0.1)',
+              background: 'linear-gradient(180deg, transparent, rgba(0,0,0,0.15))',
+              borderTop: '1px solid rgba(255,255,255,0.08)',
             }}
           >
             <Button
               type='primary'
               style={{
                 width: '100%',
-                background: 'linear-gradient(135deg, #1890ff, #177ddc)',
+                background: 'linear-gradient(135deg, #6658E8, #4F46E5)',
                 border: 'none',
-                fontWeight: 600,
-                height: '40px',
+                fontWeight: 700,
+                height: '42px',
                 fontSize: '14px',
+                boxShadow: '0 10px 18px rgba(102, 88, 232, 0.35)',
               }}
               onClick={handleClick}
             >
@@ -100,7 +103,7 @@ const Sidebar = () => {
       <Layout>
         <Content style={{
           padding: '2rem',
-          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+          background: 'linear-gradient(135deg, #F7F8FA 0%, #EDF1F7 100%)',
           backgroundAttachment: 'fixed',
           overflowY: 'auto',
         }}>
@@ -109,10 +112,11 @@ const Sidebar = () => {
               padding: '2rem',
               maxHeight: 'calc(100vh - 4rem)',
               minHeight: 'calc(100vh - 4rem)',
-              background: '#fff',
-              borderRadius: '12px',
+              background: '#FFFFFF',
+              borderRadius: '18px',
               overflow: 'auto',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+              boxShadow: '0 12px 32px rgba(23, 32, 51, 0.08)',
+              border: '1px solid rgba(23, 32, 51, 0.05)',
             }}
           >
             <Outlet />

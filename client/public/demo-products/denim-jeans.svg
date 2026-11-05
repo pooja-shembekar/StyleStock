@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="420" viewBox="0 0 360 420" fill="none">
+  <defs>
+    <linearGradient id="denim" x1="105" y1="70" x2="262" y2="354" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#52749A"/>
+      <stop offset="1" stop-color="#29486D"/>
+    </linearGradient>
+    <linearGradient id="backdrop" x1="22" y1="10" x2="337" y2="407" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F0F0EE"/>
+      <stop offset="1" stop-color="#DFE3E4"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="420" rx="24" fill="url(#backdrop)"/>
+  <ellipse cx="180" cy="365" rx="77" ry="13" fill="#253C55" fill-opacity=".13"/>
+  <path d="M111 64h138l17 89-27 195h-55l-5-140-5 140h-55l-27-195 19-89Z" fill="url(#denim)"/>
+  <path d="M112 78h136M180 78v91M115 144l62 17m68-17-62 17" stroke="#A7BDD0" stroke-opacity=".75" stroke-width="3"/>
+  <path d="m151 82-8 39h28l9-39m29 0 8 39h-28l-8-39" stroke="#A7BDD0" stroke-opacity=".7" stroke-width="2"/>
+  <path d="M137 83v23m86-23v23M120 159l24 7m96-7-24 7" stroke="#D2B989" stroke-width="2"/>
+  <path d="m171 175-23 158m41-158 3 158m7-158 23 158" stroke="#89A5BE" stroke-opacity=".55" stroke-width="2"/>
+  <path d="M117 153h22m82 0h22" stroke="#D8C69E" stroke-width="2"/>
+  <circle cx="180" cy="92" r="4" fill="#D3BD91"/>
+  <path d="M171 92h18" stroke="#D3BD91" stroke-width="2"/>
+</svg>

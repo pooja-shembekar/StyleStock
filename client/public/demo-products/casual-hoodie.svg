@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="420" viewBox="0 0 360 420" fill="none">
+  <defs>
+    <linearGradient id="hoodie" x1="92" y1="88" x2="266" y2="344" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#87929A"/>
+      <stop offset="1" stop-color="#59636D"/>
+    </linearGradient>
+    <linearGradient id="background" x1="28" y1="13" x2="334" y2="407" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F0F0EE"/>
+      <stop offset="1" stop-color="#DFE3E4"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="420" rx="24" fill="url(#background)"/>
+  <ellipse cx="180" cy="356" rx="100" ry="15" fill="#303941" fill-opacity=".13"/>
+  <path d="M137 81c8-20 23-31 43-31s35 11 43 31l46 24 39 85-46 22-25-41 7 162H116l7-162-25 41-46-22 39-85 46-24Z" fill="url(#hoodie)"/>
+  <path d="M137 82c3 38 18 58 43 58s40-20 43-58c-12-10-27-15-43-15s-31 5-43 15Z" fill="#68747E" stroke="#A7B0B5" stroke-width="3"/>
+  <path d="M137 81c10 23 24 34 43 34s33-11 43-34" stroke="#C1C7C9" stroke-width="3"/>
+  <path d="m154 87 7 83m45-83-7 83" stroke="#C7CDD0" stroke-width="3" stroke-linecap="round"/>
+  <path d="M145 226c16 10 54 10 70 0l17 48c-28 17-76 17-104 0l17-48Z" fill="#4E5861" stroke="#A5ADB2" stroke-opacity=".65" stroke-width="2"/>
+  <path d="M116 324h128M91 188l36 17m142-17-36 17" stroke="#AAB2B7" stroke-opacity=".6" stroke-width="3"/>
+  <circle cx="161" cy="171" r="2" fill="#D9DEDF"/>
+  <circle cx="199" cy="171" r="2" fill="#D9DEDF"/>
+</svg>

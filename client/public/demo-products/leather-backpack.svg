@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="420" viewBox="0 0 360 420" fill="none">
+  <defs>
+    <linearGradient id="leather" x1="99" y1="88" x2="264" y2="350" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#9B6B4E"/>
+      <stop offset="1" stop-color="#624332"/>
+    </linearGradient>
+    <linearGradient id="backdrop" x1="29" y1="15" x2="333" y2="402" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F1EEE9"/>
+      <stop offset="1" stop-color="#E2DDD4"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="420" rx="24" fill="url(#backdrop)"/>
+  <ellipse cx="181" cy="358" rx="89" ry="15" fill="#4B372A" fill-opacity=".14"/>
+  <path d="M131 110c0-29 21-52 49-52s49 23 49 52" stroke="#775239" stroke-width="11" stroke-linecap="round"/>
+  <path d="M107 126c0-12 10-22 22-22h104c12 0 22 10 22 22l18 192c2 18-12 33-30 33H119c-18 0-32-15-30-33l18-192Z" fill="url(#leather)"/>
+  <path d="M112 147h136l13 148H99l13-148Z" fill="#875B40" stroke="#C19673" stroke-width="3"/>
+  <path d="M140 145v-8c0-20 17-36 40-36s40 16 40 36v8" stroke="#C69A75" stroke-width="3"/>
+  <path d="M147 194h66v78h-66z" fill="#704A34" stroke="#C19673" stroke-width="3"/>
+  <path d="M169 194v-9a11 11 0 0 1 22 0v9" stroke="#D3AF8B" stroke-width="3"/>
+  <path d="m111 161-22 142m160-142 22 142" stroke="#D1A37C" stroke-opacity=".75" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="180" cy="235" r="3" fill="#D8BA9B"/>
+  <path d="M124 321h112" stroke="#D7B18D" stroke-opacity=".7" stroke-width="3"/>
+</svg>

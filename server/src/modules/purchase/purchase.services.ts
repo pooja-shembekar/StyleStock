@@ -4,6 +4,11 @@ import BaseServices from '../baseServices';
 import { IPurchase } from './purchase.interface';
 import Purchase from './purchase.model';
 import sortAndPaginatePipeline from '../../lib/sortAndPaginate.pipeline';
+import mongoose from 'mongoose';
+import Product from '../product/product.model';
+import Seller from '../seller/seller.model';
+import CustomError from '../../errors/customError';
+import StockMovement from '../product/stockMovement.model';
 
 class PurchaseServices extends BaseServices<any> {
   constructor(model: any, modelName: string) {
@@ -11,14 +16,183 @@ class PurchaseServices extends BaseServices<any> {
   }
 
   /**
-   * Create new sale and decrease product stock
+   * Record a purchase and increase only its selected variant's stock.
    */
   async create(payload: IPurchase, userId: string) {
-    const { unitPrice, quantity } = payload;
-    payload.user = new Types.ObjectId(userId);
-    payload.totalPrice = unitPrice * quantity;
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+      const product = await Product.findOne({
+        _id: payload.product,
+        user: new Types.ObjectId(userId),
+        'variants._id': payload.variantId,
+      }).session(session);
+      if (!product) throw new CustomError(404, 'Product variant is not found');
 
-    return this.model.create(payload);
+      const variant = product.variants.find((item) => item._id?.toString() === payload.variantId?.toString());
+      if (!variant) throw new CustomError(404, 'Product variant is not found');
+      const updatedProduct = await Product.findOneAndUpdate(
+        { _id: product._id, user: new Types.ObjectId(userId), 'variants._id': variant._id },
+        { $inc: { 'variants.$.stock': payload.quantity, stock: payload.quantity } },
+        { new: true, session },
+      );
+      if (!updatedProduct) throw new CustomError(404, 'Product variant is not found');
+
+      const seller = await Seller.findOne({ _id: product.seller, user: userId }).session(session);
+      if (!seller) throw new CustomError(404, 'Seller is not found');
+      const purchase = await this.model.create(
+        [
+          {
+            user: userId,
+            seller: product.seller,
+            product: product._id,
+            variantId: variant._id,
+            variantSize: variant.size,
+            variantColor: variant.color,
+            sellerName: seller.name,
+            productName: product.name,
+            quantity: payload.quantity,
+            unitPrice: product.price,
+            totalPrice: product.price * payload.quantity,
+            paid: payload.paid,
+          },
+        ],
+        { session },
+      );
+      await StockMovement.create(
+        [{
+          user: new Types.ObjectId(userId),
+          product: product._id,
+          variantId: variant._id,
+          variantSize: variant.size,
+          variantColor: variant.color,
+          variantSku: variant.sku,
+          type: 'purchase',
+          previousStock: variant.stock,
+          quantityChanged: payload.quantity,
+          newStock: variant.stock + payload.quantity,
+          reason: 'Stock received from purchase',
+          referenceId: purchase[0]._id,
+          performedBy: new Types.ObjectId(userId),
+        }],
+        { session },
+      );
+      await session.commitTransaction();
+      return purchase[0];
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+  }
+
+  async update(id: string, payload: Partial<IPurchase>, userId?: string) {
+    if (!userId) throw new CustomError(401, 'Authentication is required');
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+      const purchase = await this.model
+        .findOne({ _id: id, user: new Types.ObjectId(userId) })
+        .session(session);
+      if (!purchase) throw new CustomError(404, 'Purchase is not found');
+
+      const quantity = payload.quantity ?? purchase.quantity;
+      const difference = quantity - purchase.quantity;
+      if (difference && !purchase.variantId) {
+        throw new CustomError(400, 'This legacy purchase has no variant and cannot change quantity');
+      }
+      let previousStock: number | undefined;
+      let variantDetails: { size: string; color: string; sku?: string } | undefined;
+      if (difference > 0) {
+        const product = await Product.findOne({
+          _id: purchase.product,
+          user: new Types.ObjectId(userId),
+          'variants._id': purchase.variantId,
+        }).session(session);
+        const variant = product?.variants.find(
+          (item) => item._id?.toString() === purchase.variantId.toString(),
+        );
+        if (!variant) throw new CustomError(404, 'Purchase product variant is not found');
+        previousStock = variant.stock;
+        variantDetails = { size: variant.size, color: variant.color, sku: variant.sku };
+        const increased = await Product.findOneAndUpdate(
+          {
+            _id: purchase.product,
+            user: new Types.ObjectId(userId),
+            'variants._id': purchase.variantId,
+          },
+          { $inc: { 'variants.$.stock': difference, stock: difference } },
+          { session },
+        );
+        if (!increased) throw new CustomError(404, 'Purchase product variant is not found');
+      } else if (difference < 0) {
+        const product = await Product.findOne({
+          _id: purchase.product,
+          user: new Types.ObjectId(userId),
+          'variants._id': purchase.variantId,
+        }).session(session);
+        const variant = product?.variants.find(
+          (item) => item._id?.toString() === purchase.variantId.toString(),
+        );
+        if (!variant) throw new CustomError(404, 'Purchase product variant is not found');
+        previousStock = variant.stock;
+        variantDetails = { size: variant.size, color: variant.color, sku: variant.sku };
+        const reduced = await Product.findOneAndUpdate(
+          {
+            _id: purchase.product,
+            user: new Types.ObjectId(userId),
+            variants: { $elemMatch: { _id: purchase.variantId, stock: { $gte: -difference } } },
+          },
+          { $inc: { 'variants.$.stock': difference, stock: difference } },
+          { session },
+        );
+        if (!reduced) throw new CustomError(400, 'Cannot reduce the purchase below available variant stock');
+      }
+
+      const unitPrice = payload.unitPrice ?? purchase.unitPrice;
+      const updatedPurchase = await this.model.findOneAndUpdate(
+        { _id: id, user: new Types.ObjectId(userId) },
+        {
+          $set: {
+            quantity,
+            unitPrice,
+            totalPrice: quantity * unitPrice,
+            paid: payload.paid ?? purchase.paid,
+          },
+        },
+        { new: true, runValidators: true, session },
+      );
+      if (difference !== 0 && previousStock !== undefined && variantDetails) {
+        await StockMovement.create(
+          [{
+            user: new Types.ObjectId(userId),
+            product: purchase.product,
+            variantId: purchase.variantId,
+            variantSize: variantDetails.size,
+            variantColor: variantDetails.color,
+            variantSku: variantDetails.sku,
+            type: difference > 0 ? 'purchase' : 'adjustment',
+            previousStock,
+            quantityChanged: difference,
+            newStock: previousStock + difference,
+            reason: difference > 0
+              ? 'Additional stock received after purchase quantity update'
+              : 'Purchase quantity reduced',
+            referenceId: purchase._id,
+            performedBy: new Types.ObjectId(userId),
+          }],
+          { session },
+        );
+      }
+      await session.commitTransaction();
+      return updatedPurchase;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
   }
 
   /**

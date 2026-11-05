@@ -52,7 +52,12 @@ const CreateCategory = () => {
         onClick={handleClick}
         type='primary'
         disabled={isLoading}
-        style={{ textTransform: 'uppercase', fontWeight: 'bold' }}
+       style={{
+        textTransform: 'uppercase',
+       fontWeight: 'bold',
+        color: '#ffffff',
+       opacity: 1,
+}}
       >
         {isLoading && <SpinnerIcon className='spin' weight='bold' />}
         Create Category

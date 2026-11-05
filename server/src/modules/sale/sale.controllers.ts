@@ -29,15 +29,18 @@ class SaleControllers {
     const page = Number(req.query.page) || 1;
     const limit = Number(req.query.limit) || 10;
 
+    const total = result?.totalCount[0]?.total || 0;
+    const safeLimit = limit > 0 ? limit : 10;
+
     sendResponse(res, {
       success: true,
       statusCode: httpStatus.OK,
       message: 'All sales retrieved successfully',
       meta: {
         page,
-        limit,
-        total: result?.totalCount[0]?.total || 0,
-        totalPage: Math.ceil(result?.totalCount[0]?.total / limit)
+        limit: safeLimit,
+        total,
+        totalPage: Math.ceil(total / safeLimit) || 1
       },
       data: result.data
     });
@@ -117,17 +120,7 @@ class SaleControllers {
    * update sale
    */
   update = asyncHandler(async (req, res) => {
-    const { price, quantity, ...restPayload } = req.body;
-
-    const sale = await this.services.read(req.params.id, req.user._id);
-
-    const updatedPrice = price || sale.product.price;
-    const updatedQuantity = quantity || sale.quantity;
-
-    restPayload.totalPrice = updatedPrice * updatedQuantity;
-    restPayload.quantity = updatedQuantity;
-
-    const result = await this.services.update(req.params.id, restPayload);
+    const result = await this.services.update(req.params.id, req.body, req.user._id);
 
     sendResponse(res, {
       success: true,
@@ -141,7 +134,7 @@ class SaleControllers {
    * delete sale
    */
   delete = asyncHandler(async (req, res) => {
-    await this.services.delete(req.params.id);
+    await this.services.delete(req.params.id, req.user._id);
 
     sendResponse(res, {
       success: true,

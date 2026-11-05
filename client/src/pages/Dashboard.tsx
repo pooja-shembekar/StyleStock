@@ -1,18 +1,55 @@
-import { Card, Col, Row } from 'antd';
+import { Alert, Card, Col, Row, Table, Tag } from 'antd';
 import { ShoppingCartOutlined, ShoppingOutlined, DollarOutlined } from '@ant-design/icons';
 import MonthlyChart from '../components/Charts/MonthlyChart';
 import Loader from '../components/Loader';
-import { useCountProductsQuery } from '../redux/features/management/productApi';
+import { useCountProductsQuery, useGetLowStockProductsQuery } from '../redux/features/management/productApi';
 import { useYearlySaleQuery } from '../redux/features/management/saleApi';
 import DailyChart from '../components/Charts/DailyChart';
+import { ILowStockVariant } from '../types/product.types';
+import { ComponentType, ReactNode } from 'react';
+
+interface StatCardProps {
+  icon: ComponentType<{ style?: React.CSSProperties }>;
+  title: string;
+  value: ReactNode;
+  color: string;
+}
 
 const Dashboard = () => {
   const { data: products, isLoading } = useCountProductsQuery(undefined);
   const { data: yearlyData, isLoading: isLoading1 } = useYearlySaleQuery(undefined);
+  const {
+    data: lowStock,
+    isLoading: isLoadingLowStock,
+    isError: isLowStockError,
+  } = useGetLowStockProductsQuery(undefined);
 
-  if (isLoading && isLoading1) return <Loader />;
+  if (isLoading || isLoading1 || isLoadingLowStock) return <Loader />;
 
-  const StatCard = ({ icon: Icon, title, value, color }: any) => (
+  const alertColumns = [
+    { title: 'Product', dataIndex: 'name', key: 'name' },
+    {
+      title: 'Variant',
+      key: 'variant',
+      render: (_value: unknown, item: ILowStockVariant) => `${item.variant.size} / ${item.variant.color}`,
+    },
+    {
+      title: 'Stock',
+      key: 'stock',
+      render: (_value: unknown, item: ILowStockVariant) => (
+        <Tag color={item.variant.stock === 0 ? 'red' : 'orange'}>
+          {item.variant.stock === 0 ? 'Out of stock' : `${item.variant.stock} left`}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Alert threshold',
+      key: 'threshold',
+      render: (_value: unknown, item: ILowStockVariant) => item.variant.lowStockThreshold ?? 5,
+    },
+  ];
+
+  const StatCard = ({ icon: Icon, title, value, color }: StatCardProps) => (
     <Card
       style={{
         background: `linear-gradient(135deg, ${color}15, ${color}05)`,
@@ -100,6 +137,26 @@ const Dashboard = () => {
           </Card>
         </Col>
       </Row>
+      <Card
+        title='Low-stock alerts'
+        bordered={false}
+        style={{ borderRadius: '12px', marginTop: '1rem' }}
+      >
+        {isLowStockError ? (
+          <Alert type='error' showIcon message='Unable to load low-stock alerts.' />
+        ) : lowStock?.data?.length ? (
+          <Table<ILowStockVariant>
+            rowKey={(item) => `${item._id}-${item.variant._id}`}
+            loading={isLoadingLowStock}
+            columns={alertColumns}
+            dataSource={lowStock.data}
+            pagination={false}
+            size='small'
+          />
+        ) : (
+          <Alert type='success' showIcon message='No low-stock or out-of-stock variants.' />
+        )}
+      </Card>
     </>
   );
 };

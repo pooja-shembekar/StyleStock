@@ -1,12 +1,13 @@
 import { z } from 'zod';
 
 const createSchema = z.object({
-  seller: z.string(),
   product: z.string(),
-  sellerName: z.string(),
-  productName: z.string(),
-  quantity: z.number(),
-  unitPrice: z.number(),
+  variantId: z.string().min(1),
+  quantity: z.number().int().min(1),
+  seller: z.string().optional(),
+  sellerName: z.string().optional(),
+  productName: z.string().optional(),
+  unitPrice: z.number().positive().optional(),
   paid: z.number().optional()
 });
 
@@ -15,9 +16,9 @@ const updateSchema = z.object({
   product: z.string().optional(),
   sellerName: z.string().optional(),
   productName: z.string().optional(),
-  quantity: z.number().optional(),
-  unitPrice: z.number().optional(),
-  paid: z.number().optional()
+  quantity: z.number().int().min(1).optional(),
+  unitPrice: z.number().positive().optional(),
+  paid: z.number().min(0).optional()
 });
 
 const purchaseValidator = { createSchema, updateSchema };

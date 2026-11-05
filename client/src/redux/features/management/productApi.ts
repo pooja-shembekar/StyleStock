@@ -18,6 +18,13 @@ const productApi = baseApi.injectEndpoints({
       }),
       providesTags: ['product']
     }),
+    getLowStockProducts: builder.query({
+      query: () => ({
+        url: '/products/low-stock',
+        method: 'GET'
+      }),
+      providesTags: ['product']
+    }),
     getSingleProduct: builder.query({
       query: (id) => ({
         url: `/products/${id}`,
@@ -25,13 +32,43 @@ const productApi = baseApi.injectEndpoints({
       }),
       providesTags: ['product']
     }),
+    getProductMovements: builder.query({
+      query: ({ id, ...params }) => ({
+        url: `/products/${id}/movements`,
+        method: 'GET',
+        params,
+      }),
+      providesTags: ['product'],
+    }),
+    getProductNotes: builder.query({
+      query: (id) => ({
+        url: `/products/${id}/notes`,
+        method: 'GET',
+      }),
+      providesTags: ['product'],
+    }),
+    createProductNote: builder.mutation({
+      query: ({ id, body }) => ({
+        url: `/products/${id}/notes`,
+        method: 'POST',
+        body: { body },
+      }),
+      invalidatesTags: ['product'],
+    }),
+    deleteProductNote: builder.mutation({
+      query: ({ id, noteId }) => ({
+        url: `/products/${id}/notes/${noteId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['product'],
+    }),
     createNewProduct: builder.mutation({
       query: (payload) => ({
         url: '/products',
         method: 'POST',
         body: payload,
       }),
-      invalidatesTags: ['product']
+      invalidatesTags: ['product', 'purchases']
     }),
     addStock: builder.mutation({
       query: ({ id, payload }) => ({
@@ -39,7 +76,7 @@ const productApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body: payload,
       }),
-      invalidatesTags: ['product']
+      invalidatesTags: ['product', 'purchases']
     }),
     deleteProduct: builder.mutation({
       query: (id) => ({
@@ -70,9 +107,14 @@ const productApi = baseApi.injectEndpoints({
 export const {
   useGetAllProductsQuery,
   useCountProductsQuery,
+  useGetLowStockProductsQuery,
   useCreateNewProductMutation,
   useAddStockMutation,
   useDeleteProductMutation,
   useGetSingleProductQuery,
+  useGetProductMovementsQuery,
+  useGetProductNotesQuery,
+  useCreateProductNoteMutation,
+  useDeleteProductNoteMutation,
   useUpdateProductMutation,
   useBulkDeleteMutation } = productApi

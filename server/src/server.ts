@@ -2,6 +2,9 @@ import { Server } from 'http';
 import mongoose from 'mongoose';
 import app from './app';
 import config from './config';
+import { setServers } from 'node:dns';
+
+setServers(['1.1.1.1', '8.8.8.8']);
 
 let server: Server;
 

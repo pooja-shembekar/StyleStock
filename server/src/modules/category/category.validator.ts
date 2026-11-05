@@ -1,11 +1,11 @@
 import { z } from 'zod';
 
 const createSchema = z.object({
-  name: z.string()
+  name: z.string().trim().min(1)
 });
 
 const updateSchema = z.object({
-  name: z.string().optional()
+  name: z.string().trim().min(1).optional()
 });
 
 const categoryValidator = { createSchema, updateSchema };

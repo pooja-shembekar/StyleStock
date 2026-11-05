@@ -23,7 +23,7 @@ const saleApi = baseApi.injectEndpoints({
         url: `/sales/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['sale']
+      invalidatesTags: ['sale', 'product']
     }),
     updateSale: builder.mutation({
       query: ({ id, payload }) => ({
@@ -31,7 +31,7 @@ const saleApi = baseApi.injectEndpoints({
         method: 'PATCH',
         body: payload
       }),
-      invalidatesTags: ['sale']
+      invalidatesTags: ['sale', 'product']
     }),
     yearlySale: builder.query({
       query: () => ({

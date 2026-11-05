@@ -393,3 +393,23 @@ rm -rf <dir>          # Remove directory (careful!)
 ---
 
 **Remember: Most issues are just small configuration problems. Take a deep breath and check the checklist!** 🚀
+
+## Fashion variants and stock migration
+
+Existing products without variants need a one-time migration before using variant-specific
+purchases and sales. It adds variant data and synchronizes total stock without deleting products
+or transaction records. Legacy products retain their stock and receive their existing size (or
+`One Size`) and existing colour when present (otherwise `Unspecified`). The migration is safe to run again.
+
+Run this in PowerShell from the repository root, with the backend `.env` configured:
+
+```powershell
+Set-Location .\server
+npm run migrate:product-variants
+```
+
+Inventory changes use MongoDB transactions. Use MongoDB Atlas or a local MongoDB replica set;
+standalone MongoDB servers do not support transactions.
+
+The fashion category and brand defaults are added per account when the existing management lists
+are loaded. Existing names are matched case-insensitively and retained.

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="420" viewBox="0 0 360 420" fill="none">
+  <defs>
+    <linearGradient id="dress" x1="113" y1="83" x2="255" y2="350" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E9AFC0"/>
+      <stop offset="1" stop-color="#C97591"/>
+    </linearGradient>
+    <linearGradient id="background" x1="25" y1="16" x2="335" y2="402" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F7F1ED"/>
+      <stop offset="1" stop-color="#E9DFDA"/>
+    </linearGradient>
+  </defs>
+  <rect width="360" height="420" rx="24" fill="url(#background)"/>
+  <ellipse cx="181" cy="362" rx="83" ry="14" fill="#754B59" fill-opacity=".12"/>
+  <path d="m143 78 37 25 37-25 23 25-18 77 35 148H103l35-148-18-77 23-25Z" fill="url(#dress)"/>
+  <path d="m143 78 37 25 37-25-10-25h-54l-10 25Z" fill="#F2D9DF"/>
+  <path d="m145 81 35 24 35-24-11 60h-48l-11-60Z" fill="#F4E4E6"/>
+  <path d="M124 181h112M180 104v221" stroke="#F3D0D9" stroke-opacity=".72" stroke-width="3"/>
+  <path d="M137 98c9 0 9 12 0 12s-9-12 0-12Zm78 18c9 0 9 12 0 12s-9-12 0-12Zm-45 43c9 0 9 12 0 12s-9-12 0-12Zm46 51c9 0 9 12 0 12s-9-12 0-12Zm-68 29c9 0 9 12 0 12s-9-12 0-12Zm46 40c9 0 9 12 0 12s-9-12 0-12Zm-38 28c9 0 9 12 0 12s-9-12 0-12Z" fill="#F7E5CB"/>
+  <circle cx="137" cy="104" r="3" fill="#F7E5CB"/>
+  <circle cx="215" cy="124" r="3" fill="#F7E5CB"/>
+  <circle cx="170" cy="149" r="3" fill="#F7E5CB"/>
+  <path d="M128 171c32 9 67 9 104 0" stroke="#AE5F7B" stroke-opacity=".55" stroke-width="3"/>
+</svg>

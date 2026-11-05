@@ -3,6 +3,9 @@ export interface IPurchase {
   user: string
   seller: string
   product: string
+  variantId?: string
+  variantSize?: string
+  variantColor?: string
   sellerName: string
   productName: string
   quantity: number

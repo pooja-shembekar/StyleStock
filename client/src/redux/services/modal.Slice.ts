@@ -6,7 +6,7 @@ import { IProduct } from '../../types/product.types';
 interface InitialState {
   updateModel: { open: boolean, data: null | IProduct },
   createVariantModel: { open: boolean, data: null | IProduct },
-  saleModel: { open: boolean, data: null | { _id: string, price: number, name: string } },
+  saleModel: { open: boolean, data: null | IProduct },
   bulkDelete: string[]
 }
 
@@ -29,7 +29,7 @@ const modalSlice = createSlice({
       state.createVariantModel.open = action.payload.open
       state.createVariantModel.data = action.payload.data
     },
-    toggleSaleModel: (state, action: PayloadAction<{ open: boolean, data: null | { _id: string, price: number, name: string } }>) => {
+    toggleSaleModel: (state, action: PayloadAction<{ open: boolean, data: null | IProduct }>) => {
       state.saleModel.open = action.payload.open
       state.saleModel.data = action.payload.data
     },

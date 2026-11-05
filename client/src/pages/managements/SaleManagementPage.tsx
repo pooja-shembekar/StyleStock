@@ -6,9 +6,20 @@ import { FieldValues, useForm } from 'react-hook-form';
 import SearchInput from '../../components/SearchInput';
 import toastMessage from '../../lib/toastMessage';
 import { useDeleteSaleMutation, useGetAllSaleQuery } from '../../redux/features/management/saleApi';
-import { IProduct } from '../../types/product.types';
 import { ITableSale } from '../../types/sale.type';
 import formatDate from '../../utils/formatDate';
+import { getApiErrorMessage } from '../../utils/apiError';
+
+interface SaleTableRow {
+  key: string;
+  productName: string;
+  variant: string;
+  productPrice: number;
+  buyerName: string;
+  quantity: number;
+  totalPrice: number;
+  date: string;
+}
 
 const SaleManagementPage = () => {
   const [query, setQuery] = useState({
@@ -23,9 +34,12 @@ const SaleManagementPage = () => {
     setQuery((prev) => ({ ...prev, page: page }));
   };
 
-  const tableData = data?.data?.map((sale: ITableSale) => ({
+  const tableData: SaleTableRow[] | undefined = data?.data?.map((sale: ITableSale) => ({
     key: sale._id,
     productName: sale.productName,
+    variant: sale.variantSize && sale.variantColor
+      ? `${sale.variantSize} / ${sale.variantColor}`
+      : 'Legacy sale',
     productPrice: sale.productPrice,
     buyerName: sale.buyerName,
     quantity: sale.quantity,
@@ -33,7 +47,7 @@ const SaleManagementPage = () => {
     date: formatDate(sale.date),
   }));
 
-  const columns: TableColumnsType<any> = [
+  const columns: TableColumnsType<SaleTableRow> = [
     {
       title: 'Product Name',
       key: 'productName',
@@ -43,6 +57,12 @@ const SaleManagementPage = () => {
       title: 'Product Price',
       key: 'productPrice',
       dataIndex: 'productPrice',
+      align: 'center',
+    },
+    {
+      title: 'Variant',
+      key: 'variant',
+      dataIndex: 'variant',
       align: 'center',
     },
     {
@@ -121,7 +141,7 @@ const SaleManagementPage = () => {
 /**
  * Update Modal
  */
-const UpdateModal = ({ product }: { product: IProduct }) => {
+const UpdateModal = ({ product }: { product: SaleTableRow }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { handleSubmit } = useForm();
 
@@ -174,9 +194,9 @@ const DeleteModal = ({ id }: { id: string }) => {
         toastMessage({ icon: 'success', text: res.message });
         handleCancel();
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       handleCancel();
-      toastMessage({ icon: 'error', text: error.data.message });
+      toastMessage({ icon: 'error', text: getApiErrorMessage(error, 'Unable to delete sale') });
     }
   };
 
