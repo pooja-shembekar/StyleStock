@@ -1,13 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import BaseServices from '../baseServices';
 import Category from './category.model';
 import { fashionCategories } from '../../constant/fashionCatalog';
 import CustomError from '../../errors/customError';
-import { Types } from 'mongoose';
+import { Types, UpdateQuery } from 'mongoose';
+import { ICategory } from './category.interface';
 
-class CategoryServices extends BaseServices<any> {
-  constructor(model: any, modelName: string) {
-    super(model, modelName);
+class CategoryServices extends BaseServices<ICategory> {
+  constructor() {
+    super(Category, 'Category');
   }
 
   /**
@@ -35,7 +35,24 @@ class CategoryServices extends BaseServices<any> {
     if (existing) throw new CustomError(409, 'Category already exists');
     return this.model.create({ user: userId, name });
   }
+
+  async update(id: string, payload: { name?: string }, userId: string) {
+    if (!Types.ObjectId.isValid(id)) throw new CustomError(400, 'Invalid Category ID');
+    const name = payload.name?.trim();
+    if (name) {
+      const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const duplicate = await this.model.findOne({
+        _id: { $ne: new Types.ObjectId(id) },
+        user: new Types.ObjectId(userId),
+        name: { $regex: `^${escapedName}$`, $options: 'i' }
+      });
+      if (duplicate) throw new CustomError(409, 'Category already exists');
+      return super.update(id, { $set: { name } } as UpdateQuery<ICategory>, userId);
+    }
+
+    return super.update(id, {} as UpdateQuery<ICategory>, userId);
+  }
 }
 
-const categoryServices = new CategoryServices(Category, 'Category');
+const categoryServices = new CategoryServices();
 export default categoryServices;

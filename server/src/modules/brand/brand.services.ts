@@ -1,13 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import BaseServices from '../baseServices';
 import Brand from './brand.model';
 import { fashionBrands } from '../../constant/fashionCatalog';
 import CustomError from '../../errors/customError';
-import { Types } from 'mongoose';
+import { Types, UpdateQuery } from 'mongoose';
+import { IBrand } from './brand.interface';
 
-class BrandServices extends BaseServices<any> {
-  constructor(model: any, modelName: string) {
-    super(model, modelName);
+class BrandServices extends BaseServices<IBrand> {
+  constructor() {
+    super(Brand, 'Brand');
   }
 
   /**
@@ -35,7 +35,24 @@ class BrandServices extends BaseServices<any> {
     if (existing) throw new CustomError(409, 'Brand already exists');
     return this.model.create({ user: userId, name });
   }
+
+  async update(id: string, payload: { name?: string }, userId: string) {
+    if (!Types.ObjectId.isValid(id)) throw new CustomError(400, 'Invalid Brand ID');
+    const name = payload.name?.trim();
+    if (name) {
+      const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const duplicate = await this.model.findOne({
+        _id: { $ne: new Types.ObjectId(id) },
+        user: new Types.ObjectId(userId),
+        name: { $regex: `^${escapedName}$`, $options: 'i' }
+      });
+      if (duplicate) throw new CustomError(409, 'Brand already exists');
+      return super.update(id, { $set: { name } } as UpdateQuery<IBrand>, userId);
+    }
+
+    return super.update(id, {} as UpdateQuery<IBrand>, userId);
+  }
 }
 
-const brandServices = new BrandServices(Brand, 'Brand');
+const brandServices = new BrandServices();
 export default brandServices;

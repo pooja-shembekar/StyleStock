@@ -1,24 +1,18 @@
 import { z } from 'zod';
 
 const createSchema = z.object({
-  product: z.string(),
-  variantId: z.string().min(1),
+  product: z.string().regex(/^[a-f\d]{24}$/i, 'Invalid product ID'),
+  variantId: z.string().regex(/^[a-f\d]{24}$/i, 'Invalid product variant ID'),
   quantity: z.number().int().min(1),
-  seller: z.string().optional(),
-  sellerName: z.string().optional(),
-  productName: z.string().optional(),
-  unitPrice: z.number().positive().optional(),
-  paid: z.number().optional()
+  paid: z.number().min(0).optional()
 });
 
 const updateSchema = z.object({
-  seller: z.string().optional(),
-  product: z.string().optional(),
-  sellerName: z.string().optional(),
-  productName: z.string().optional(),
   quantity: z.number().int().min(1).optional(),
   unitPrice: z.number().positive().optional(),
   paid: z.number().min(0).optional()
+}).refine((purchase) => Object.keys(purchase).length > 0, {
+  message: 'At least one purchase field must be provided'
 });
 
 const purchaseValidator = { createSchema, updateSchema };

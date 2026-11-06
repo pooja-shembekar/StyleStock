@@ -10,6 +10,9 @@ import Seller from '../seller/seller.model';
 import { IProduct } from './product.interface';
 import ProductNote from './productNote.model';
 import StockMovement from './stockMovement.model';
+import Category from '../category/category.model';
+import Brand from '../brand/brand.model';
+import { getPagination } from '../../lib/queryUtils';
 
 class ProductServices extends BaseServices<any> {
   constructor(model: any, modelName: string) {
@@ -29,6 +32,18 @@ class ProductServices extends BaseServices<any> {
 
       const seller = await Seller.findOne({ _id: productPayload.seller, user: userId }).session(session);
       if (!seller) throw new CustomError(404, 'Seller is not found');
+      const category = await Category.findOne({
+        _id: productPayload.category,
+        user: new Types.ObjectId(userId)
+      }).session(session);
+      if (!category) throw new CustomError(404, 'Category is not found');
+      if (productPayload.brand) {
+        const brand = await Brand.findOne({
+          _id: productPayload.brand,
+          user: new Types.ObjectId(userId)
+        }).session(session);
+        if (!brand) throw new CustomError(404, 'Brand is not found');
+      }
       const [product] = await this.model.create([productPayload], { session });
       const purchases = product.variants
         .filter((variant: any) => variant.stock > 0)
@@ -172,9 +187,31 @@ class ProductServices extends BaseServices<any> {
    * Multiple delete
    */
   async bulkDelete(payload: string[], userId: string) {
+    if (
+      !payload.length ||
+      payload.length > 100 ||
+      new Set(payload).size !== payload.length ||
+      payload.some((item) => !Types.ObjectId.isValid(item))
+    ) {
+      throw new CustomError(400, 'Invalid product ID list');
+    }
     const data = payload.map((item) => new Types.ObjectId(item));
-
-    return this.model.deleteMany({ _id: { $in: data }, user: new Types.ObjectId(userId) });
+    const filter = { _id: { $in: data }, user: new Types.ObjectId(userId) };
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+      const ownedCount = await this.model.countDocuments(filter).session(session);
+      if (ownedCount !== data.length) throw new CustomError(404, 'One or more products are not found');
+      const result = await this.model.deleteMany(filter, { session });
+      if (result.deletedCount !== data.length) throw new CustomError(404, 'One or more products are not found');
+      await session.commitTransaction();
+      return result;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
   }
 
   async update(id: string, payload: Partial<IProduct>, userId?: string) {
@@ -190,11 +227,33 @@ class ProductServices extends BaseServices<any> {
         .session(session);
       if (!existingProduct) throw new CustomError(404, 'Product is not found');
 
-    if (updatePayload.variants) {
-      updatePayload.stock = updatePayload.variants.reduce((total, variant) => total + variant.stock, 0);
-    } else {
-      delete updatePayload.stock;
-    }
+      if (updatePayload.seller) {
+        const seller = await Seller.findOne({
+          _id: updatePayload.seller,
+          user: new Types.ObjectId(userId)
+        }).session(session);
+        if (!seller) throw new CustomError(404, 'Seller is not found');
+      }
+      if (updatePayload.category) {
+        const category = await Category.findOne({
+          _id: updatePayload.category,
+          user: new Types.ObjectId(userId)
+        }).session(session);
+        if (!category) throw new CustomError(404, 'Category is not found');
+      }
+      if (updatePayload.brand) {
+        const brand = await Brand.findOne({
+          _id: updatePayload.brand,
+          user: new Types.ObjectId(userId)
+        }).session(session);
+        if (!brand) throw new CustomError(404, 'Brand is not found');
+      }
+
+      if (updatePayload.variants) {
+        updatePayload.stock = updatePayload.variants.reduce((total, variant) => total + variant.stock, 0);
+      } else {
+        delete updatePayload.stock;
+      }
       const updatedProduct = await this.model.findOneAndUpdate(
         { _id: id, user: new Types.ObjectId(userId) },
         { $set: updatePayload },
@@ -347,26 +406,23 @@ class ProductServices extends BaseServices<any> {
     const product = await this.model.findOne({ _id: id, user: new Types.ObjectId(userId) }).select('_id');
     if (!product) throw new CustomError(404, 'Product is not found');
 
-    const requestedPage = Number(query.page);
-    const requestedLimit = Number(query.limit);
-    const page = Number.isInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
-    const limit = Number.isInteger(requestedLimit) && requestedLimit > 0
-      ? Math.min(requestedLimit, 100)
-      : 10;
+    const { page, limit } = getPagination(query);
     const filter: Record<string, unknown> = {
       user: new Types.ObjectId(userId),
       product: product._id,
     };
 
-    if (query.variantId) {
-      if (!Types.ObjectId.isValid(query.variantId as string)) {
+    if (query.variantId !== undefined) {
+      if (typeof query.variantId !== 'string' || !Types.ObjectId.isValid(query.variantId)) {
         throw new CustomError(400, 'Invalid product variant ID');
       }
-      filter.variantId = new Types.ObjectId(query.variantId as string);
+      filter.variantId = new Types.ObjectId(query.variantId);
     }
-    if (query.type) {
+    if (query.type !== undefined) {
       const allowedTypes = ['initial_stock', 'purchase', 'sale', 'return', 'adjustment'];
-      if (!allowedTypes.includes(query.type as string)) throw new CustomError(400, 'Invalid stock movement type');
+      if (typeof query.type !== 'string' || !allowedTypes.includes(query.type)) {
+        throw new CustomError(400, 'Invalid stock movement type');
+      }
       filter.type = query.type;
     }
 

@@ -52,6 +52,12 @@ const globalErrorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
     errorResponse.statusCode = httpStatus.CONFLICT;
     errorResponse.message = 'Duplicate Entities!';
     errorResponse.errors = { [key]: `${value} is Already Exists!` };
+  } else if (err?.type === 'entity.parse.failed') {
+    errorResponse.statusCode = httpStatus.BAD_REQUEST;
+    errorResponse.message = 'Invalid JSON request body';
+  } else if (err?.type === 'entity.too.large') {
+    errorResponse.statusCode = 413;
+    errorResponse.message = 'Request body is too large';
   }
 
   return res.status(errorResponse.statusCode).json(errorResponse);

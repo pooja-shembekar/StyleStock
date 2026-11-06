@@ -5,10 +5,9 @@ export interface IUser {
   description?: string;
   role: string;
   avatar?: string;
-  password: string;
   status: string;
   address?: string;
-  phone?: string
+  phone?: string;
   city?: string;
   country?: string;
   facebook?: string;
@@ -16,6 +15,25 @@ export interface IUser {
   linkedin?: string;
   instagram?: string;
 }
+
+export type IProfileUpdate = Partial<
+  Pick<
+    IUser,
+    | 'name'
+    | 'email'
+    | 'title'
+    | 'description'
+    | 'avatar'
+    | 'address'
+    | 'phone'
+    | 'city'
+    | 'country'
+    | 'facebook'
+    | 'twitter'
+    | 'linkedin'
+    | 'instagram'
+  >
+>;
 
 export const profileKeys = [
   { keyName: 'name' },
@@ -33,9 +51,9 @@ export const profileKeys = [
   { keyName: 'instagram' },
 ]
 
-export const profileInputFields = [
+export const profileInputFields: Array<{ id: number; name: keyof IProfileUpdate; label: string; type?: string }> = [
   { id: 1, name: 'name', label: 'Name' },
-  { id: 2, name: 'email', label: 'Email' },
+  { id: 2, name: 'email', label: 'Email', type: 'email' },
   { id: 3, name: 'title', label: 'Title' },
   { id: 4, name: 'description', label: 'Description' },
   { id: 7, name: 'address', label: 'Address' },

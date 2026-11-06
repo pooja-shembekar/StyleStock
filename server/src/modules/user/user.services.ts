@@ -19,7 +19,9 @@ class UserServices {
 
   // get profile
   async getSelf(userId: string) {
-    return this.model.findById(userId);
+    const user = await this.model.findById(userId);
+    if (!user) throw new CustomError(httpStatus.NOT_FOUND, 'User not found');
+    return toPublicUser(user);
   }
   // register new user
   async register(payload: IRegisterPayload) {
@@ -53,7 +55,9 @@ class UserServices {
 
   // update user profile
   async updateProfile(id: string, payload: Partial<IUser>) {
-    return this.model.findByIdAndUpdate(id, payload);
+    const user = await this.model.findByIdAndUpdate(id, payload, { new: true, runValidators: true });
+    if (!user) throw new CustomError(httpStatus.NOT_FOUND, 'User not found');
+    return toPublicUser(user);
   }
 
   // change Password
@@ -68,9 +72,8 @@ class UserServices {
     }
 
     const hashedPassword = await bcrypt.hash(payload.newPassword, 10);
-    const updatedUser = await this.model.findByIdAndUpdate(userId, { password: hashedPassword });
-
-    return updatedUser;
+    await this.model.findByIdAndUpdate(userId, { password: hashedPassword }, { runValidators: true });
+    return { success: true };
   }
 }
 

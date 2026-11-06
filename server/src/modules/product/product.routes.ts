@@ -10,7 +10,7 @@ productRoute.use(verifyAuth);
 
 productRoute.get('/total', productControllers.getTotalProduct);
 productRoute.get('/low-stock', productControllers.getLowStock);
-productRoute.post('/bulk-delete', productControllers.bulkDelete);
+productRoute.post('/bulk-delete', validateRequest(productValidator.bulkDeleteSchema), productControllers.bulkDelete);
 productRoute.post('/', validateRequest(productValidator.createSchema), productControllers.create);
 productRoute.get('/', productControllers.readAll);
 productRoute.patch('/:id/add', validateRequest(productValidator.addStockSchema), productControllers.addStock);

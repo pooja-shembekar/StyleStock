@@ -29,8 +29,6 @@ const SaleModal = () => {
       const res = await createNewSale({
         ...form,
         product: data._id,
-        productName: data.name,
-        productPrice: data.price,
         quantity,
       }).unwrap();
       if (res.statusCode === 201) {

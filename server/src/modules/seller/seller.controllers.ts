@@ -2,6 +2,7 @@ import httpStatus from 'http-status';
 import asyncHandler from '../../lib/asyncHandler';
 import sendResponse from '../../lib/sendResponse';
 import sellerServices from './seller.services';
+import { getPagination } from '../../lib/queryUtils';
 
 class SellerControllers {
   services = sellerServices;
@@ -26,8 +27,7 @@ class SellerControllers {
   readAll = asyncHandler(async (req, res) => {
     const result = await this.services.readAll(req.query, req.user._id);
 
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+    const { page, limit } = getPagination(req.query);
 
     sendResponse(res, {
       success: true,
@@ -37,7 +37,7 @@ class SellerControllers {
         page,
         limit,
         total: result?.totalCount[0]?.total || 0,
-        totalPage: Math.ceil(result?.totalCount[0]?.total / limit)
+        totalPage: Math.ceil((result?.totalCount[0]?.total || 0) / limit) || 1
       },
       data: result.data
     });

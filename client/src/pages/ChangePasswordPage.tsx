@@ -4,9 +4,10 @@ import { toast } from 'sonner';
 import { useChangePasswordMutation } from '../redux/features/authApi';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeftOutlined } from '@ant-design/icons';
+import { getApiErrorMessage } from '../utils/apiError';
 
 const ChangePasswordPage = () => {
-  const [changePassword] = useChangePasswordMutation();
+  const [changePassword, { isLoading }] = useChangePasswordMutation();
   const [oldPassword, setOldPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,11 +32,10 @@ const ChangePasswordPage = () => {
     const payload = {
       oldPassword,
       newPassword,
-      confirmPassword,
     };
+    const toastId = toast.loading('Changing password...');
 
     try {
-      const toastId = toast.loading('Changing password...');
       const res = await changePassword(payload).unwrap();
 
       if (res.success) {
@@ -45,8 +45,8 @@ const ChangePasswordPage = () => {
         setConfirmPassword('');
         navigate('/profile');
       }
-    } catch (error: any) {
-      toast.error(error.data.message, { id: error.data.statusCode });
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'Unable to change password'), { id: toastId });
     }
   };
 
@@ -81,7 +81,7 @@ const ChangePasswordPage = () => {
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
         />
-        <Button type='primary' onClick={handleSubmit} disabled={true}>
+        <Button type='primary' onClick={handleSubmit} loading={isLoading} disabled={isLoading}>
           Change Password
         </Button>
         <Button type='default' onClick={() => navigate('/profile')}>

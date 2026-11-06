@@ -36,11 +36,22 @@ const toFormVariants = (variants: IProductVariant[] = []): ProductVariantFormVal
 
 const ProductManagePage = () => {
   const [current, setCurrent] = useState(1);
-  const [query, setQuery] = useState({ name: '', category: '', brand: '', limit: 10 });
+  const [query, setQuery] = useState({
+    name: '',
+    category: '',
+    brand: '',
+    minPrice: 0,
+    maxPrice: 20000,
+    limit: 10,
+  });
   const [selectedProduct, setSelectedProduct] = useState<ListedProduct | null>(null);
   const [editingProduct, setEditingProduct] = useState<ListedProduct | null>(null);
   const [stockTarget, setStockTarget] = useState<{ product: ListedProduct; variantId: string } | null>(null);
   const { data: products, isFetching } = useGetAllProductsQuery({ ...query, page: current });
+
+  useEffect(() => {
+    setCurrent(1);
+  }, [query.name, query.category, query.brand, query.minPrice, query.maxPrice]);
 
   const tableData = products?.data?.map((product: IProduct) => ({
     ...product,
@@ -177,8 +188,6 @@ const SellProductModal = ({ product }: { product: ListedProduct }) => {
       const res = await saleProduct({
         product: product.key,
         variantId: data.variantId,
-        productName: product.name,
-        productPrice: product.price,
         quantity,
         buyerName: data.buyerName,
         date: data.date,

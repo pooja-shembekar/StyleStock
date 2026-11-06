@@ -161,8 +161,9 @@ The backend reads `server/.env` and the Vite frontend reads `client/.env`. Examp
 | `PORT`         | Port used by the API; the starter scripts expect `5000` |
 | `DATABASE_URL` | MongoDB connection string                               |
 | `JWT_SECRET`   | Private signing secret used to verify JWTs              |
+| `CLIENT_URL`   | Exact production frontend origin allowed by CORS (for example `https://your-project.vercel.app`) |
 
-Use your own local MongoDB or Atlas URI for `DATABASE_URL`, and a long random value for `JWT_SECRET`. Do not commit these values or share them publicly.
+Use your own local MongoDB or Atlas URI for `DATABASE_URL`, and a long random value for `JWT_SECRET`. In production, set `CLIENT_URL` to the exact Vercel site origin (scheme and host, no path); do not guess it. Local development allows `http://localhost:5173` and `http://localhost:3000`. Do not commit secrets or share database credentials or `JWT_SECRET`.
 
 ### Frontend
 
@@ -172,9 +173,9 @@ Use your own local MongoDB or Atlas URI for `DATABASE_URL`, and a long random va
 | `VITE_CLOUDINARY_CLOUD_NAME`    | Cloudinary cloud name used by browser uploads |
 | `VITE_CLOUDINARY_UPLOAD_PRESET` | Name of the Cloudinary unsigned upload preset |
 
-Frontend uploads require a Cloudinary account, its cloud name, and an unsigned upload preset configured in the Cloudinary dashboard. Set the preset name in `VITE_CLOUDINARY_UPLOAD_PRESET`. The app uploads image files directly to Cloudinary and saves the returned secure image URL with the product through the API. Client-side upload validation limits each file to 10 MB and each product to 12 images.
+Frontend product and profile image uploads require a Cloudinary account, its cloud name, and an unsigned upload preset configured in the Cloudinary dashboard. Set the preset name in `VITE_CLOUDINARY_UPLOAD_PRESET`. The app uploads image files directly to Cloudinary and saves the returned secure image URL through the API. Client-side upload validation limits each file to 10 MB and each product to 12 images.
 
-All `VITE_` values are included in browser code and are public configuration, not secrets. Never put a Cloudinary API secret in a frontend variable. Configure suitable format and size restrictions on the unsigned preset. Restart Vite after changing frontend environment variables.
+For Vercel, configure all three frontend variables in the project's Production environment and redeploy after changes. `VITE_BASE_URL` must be the API URL including `/api/v1`; the production client enforces HTTPS. All `VITE_` values are included in browser code and are public configuration, not secrets. Never put a Cloudinary API secret in a frontend variable. Configure the unsigned preset to allow only required image formats, cap upload size at 10 MB, and restrict allowed transformations/storage as appropriate.
 
 ## Available npm commands
 
@@ -195,6 +196,7 @@ Run each command from its package directory.
 | ---------------------------------- | -------------------------------------------- |
 | `npm run dev`                      | Start the TypeScript API in development      |
 | `npm run build`                    | Compile TypeScript to `dist/`                |
+| `npm test`                         | Build and run the backend unit/regression tests |
 | `npm start`                        | Run the compiled API (`npm run build` first) |
 | `npm run lint`                     | Run ESLint                                   |
 | `npm run lint:fix`                 | Apply ESLint fixes                           |
@@ -203,7 +205,7 @@ Run each command from its package directory.
 | `npm run migrate:product-variants` | Build and run the product-variant migration  |
 | `npm run seed:style-stock-demo`    | Build and run the StyleStock demo-data seed  |
 
-The migration and seed commands connect to the database selected by `DATABASE_URL`; use them only when you intend to change that database. Automated tests are not currently configured in the client or server package, and no test/spec files are present. `next-client/` is a separate Next.js workspace, not used by the root startup scripts or the main setup above.
+The migration and seed commands connect to the database selected by `DATABASE_URL`; use them only when you intend to change that database. Backend tests use mocked/unit-level checks and do not verify MongoDB Atlas transaction support. The client currently has no automated test runner configured. `next-client/` is a separate Next.js workspace, not used by the root startup scripts or the main setup above.
 
 ## How to use
 
@@ -218,7 +220,7 @@ The migration and seed commands connect to the database selected by `DATABASE_UR
 
 ## Troubleshooting
 
-- **API cannot connect to MongoDB:** Check that MongoDB is running and `server\.env` contains a valid `DATABASE_URL`. If a transaction-related error appears with local MongoDB, configure it as a replica set or use Atlas.
+- **API cannot connect to MongoDB:** Check that MongoDB is running and `server\.env` contains a valid `DATABASE_URL`. If a transaction-related error appears with local MongoDB, configure it as a replica set or use an Atlas deployment that supports transactions.
 - **Frontend API requests fail:** Confirm the API is running and `VITE_BASE_URL` is `http://localhost:5000/api/v1` (or matches your configured API host and port). Restart the Vite process after editing `client\.env`.
 - **Image upload is unavailable:** Confirm both Cloudinary frontend variables are set, the cloud name is correct, and the unsigned preset permits the selected image type and size. Restart Vite after changing the variables.
 - **A port is already in use:** In PowerShell, identify the process ID with:
@@ -238,13 +240,15 @@ The migration and seed commands connect to the database selected by `DATABASE_UR
 - Passwords are hashed with bcrypt; authenticated API routes use JWT bearer tokens.
 - The frontend sends JWTs in the `Authorization` header. The application does not implement HttpOnly-cookie authentication.
 - Never commit `.env` files or share database credentials or `JWT_SECRET`. Keep all `VITE_` values public; they are bundled into frontend code.
-- The API's CORS allowlist in `server/src/app.ts` currently permits `http://localhost:5173`, `http://localhost:3000`, and `https://inventory-navy.vercel.app`. Update the source allowlist when using another frontend origin.
+- In production, set Render's `CLIENT_URL` to the exact Vercel frontend origin. CORS allows this configured origin and rejects other browser origins; it does not use a wildcard.
 - Cloudinary uploads use a browser-side unsigned preset. Configure that preset with appropriate upload restrictions; do not expose Cloudinary API secrets in the client.
-- This README does not certify the project as production-hardened. Review authentication, CORS, secrets, upload restrictions, and database access for your deployment.
+- `GET /` and `GET /health` report service liveness. `GET /api/v1/health` reports readiness and returns 503 while MongoDB is disconnected.
+- This README does not certify the project as production-hardened. Confirm Atlas transaction support, Vercel/Render environment variables, CORS origin, upload restrictions, and database access for your deployment.
 
 ## Future improvements
 
-- Add automated unit and integration tests.
+- Add isolated MongoDB integration tests, including deployment-specific transaction verification.
+- Complete seller/category/brand management screens and their update/delete flows.
 - Document API request and response schemas.
 - Complete the purchase and sale record editing workflows in the UI (API update routes exist, but the current edit forms do not submit changes).
 - Add deployment-specific configuration and operational monitoring.

@@ -3,30 +3,29 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import CustomError from '../errors/customError';
 import httpStatus from 'http-status';
 import config from '../config';
+import { Types } from 'mongoose';
 
 const verifyAuth: RequestHandler = (req, _res, next) => {
-  const bearerToken = req.headers.authorization;
+  const authorization = req.headers.authorization;
+  const match = authorization?.match(/^Bearer\s+(\S+)$/i);
 
-  if (bearerToken) {
-    const token = bearerToken.split(' ')[1];
+  if (!match || !config.jwt_secret) {
+    throw new CustomError(httpStatus.UNAUTHORIZED, 'Unauthorize! please login', 'Unauthorize');
+  }
 
-    if (token) {
-      try {
-        const decode = jwt.verify(token, config.jwt_secret as string) as JwtPayload;
-
-        req.user = {
-          _id: decode?._id,
-          email: decode?.email
-        };
-
-        next();
-      } catch (error) {
-        throw new CustomError(httpStatus.UNAUTHORIZED, 'Unauthorize! please login', 'Unauthorize');
-      }
-    } else {
-      throw new CustomError(httpStatus.UNAUTHORIZED, 'Unauthorize! please login', 'Unauthorize');
+  try {
+    const decode = jwt.verify(match[1], config.jwt_secret) as JwtPayload;
+    if (
+      typeof decode._id !== 'string' ||
+      !Types.ObjectId.isValid(decode._id) ||
+      typeof decode.email !== 'string'
+    ) {
+      throw new Error('Invalid token claims');
     }
-  } else {
+
+    req.user = { _id: decode._id, email: decode.email };
+    next();
+  } catch {
     throw new CustomError(httpStatus.UNAUTHORIZED, 'Unauthorize! please login', 'Unauthorize');
   }
 };

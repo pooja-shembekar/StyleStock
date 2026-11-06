@@ -1,16 +1,9 @@
+import { getPagination } from './queryUtils';
+
 const sortAndPaginatePipeline = (query: Record<string, unknown>) => {
-  let page = 1;
-  let limit = 10;
+  const { page, limit } = getPagination(query);
   const sortBy = 'createdAt';
   let sortOrder: -1 | 1 = -1;
-
-  if (query.limit) {
-    limit = Number(query.limit);
-  }
-
-  if (query.page) {
-    page = Number(query.page);
-  }
 
   if (query.sortOrder) {
     sortOrder = query.sortOrder === 'desc' ? -1 : 1;
@@ -19,7 +12,8 @@ const sortAndPaginatePipeline = (query: Record<string, unknown>) => {
   return [
     {
       $sort: {
-        [sortBy]: sortOrder
+        [sortBy]: sortOrder,
+        _id: sortOrder
       }
     },
     {

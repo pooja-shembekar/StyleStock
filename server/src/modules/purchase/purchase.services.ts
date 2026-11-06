@@ -9,6 +9,7 @@ import Product from '../product/product.model';
 import Seller from '../seller/seller.model';
 import CustomError from '../../errors/customError';
 import StockMovement from '../product/stockMovement.model';
+import { escapeRegex, getSearchTerm } from '../../lib/queryUtils';
 
 class PurchaseServices extends BaseServices<any> {
   constructor(model: any, modelName: string) {
@@ -31,6 +32,9 @@ class PurchaseServices extends BaseServices<any> {
 
       const variant = product.variants.find((item) => item._id?.toString() === payload.variantId?.toString());
       if (!variant) throw new CustomError(404, 'Product variant is not found');
+      const totalPrice = product.price * payload.quantity;
+      const paid = payload.paid ?? 0;
+      if (paid > totalPrice) throw new CustomError(400, 'Paid amount cannot exceed purchase total');
       const updatedProduct = await Product.findOneAndUpdate(
         { _id: product._id, user: new Types.ObjectId(userId), 'variants._id': variant._id },
         { $inc: { 'variants.$.stock': payload.quantity, stock: payload.quantity } },
@@ -53,8 +57,8 @@ class PurchaseServices extends BaseServices<any> {
             productName: product.name,
             quantity: payload.quantity,
             unitPrice: product.price,
-            totalPrice: product.price * payload.quantity,
-            paid: payload.paid,
+            totalPrice,
+            paid,
           },
         ],
         { session },
@@ -151,6 +155,10 @@ class PurchaseServices extends BaseServices<any> {
       }
 
       const unitPrice = payload.unitPrice ?? purchase.unitPrice;
+      const paid = payload.paid ?? purchase.paid;
+      if (paid > quantity * unitPrice) {
+        throw new CustomError(400, 'Paid amount cannot exceed purchase total');
+      }
       const updatedPurchase = await this.model.findOneAndUpdate(
         { _id: id, user: new Types.ObjectId(userId) },
         {
@@ -158,7 +166,7 @@ class PurchaseServices extends BaseServices<any> {
             quantity,
             unitPrice,
             totalPrice: quantity * unitPrice,
-            paid: payload.paid ?? purchase.paid,
+            paid,
           },
         },
         { new: true, runValidators: true, session },
@@ -195,23 +203,98 @@ class PurchaseServices extends BaseServices<any> {
     }
   }
 
+  async delete(id: string, userId: string) {
+    if (!Types.ObjectId.isValid(id)) throw new CustomError(400, 'Invalid purchase ID');
+    const session = await mongoose.startSession();
+    try {
+      session.startTransaction();
+      const purchase = await this.model
+        .findOne({ _id: new Types.ObjectId(id), user: new Types.ObjectId(userId) })
+        .session(session);
+      if (!purchase) throw new CustomError(404, 'Purchase is not found');
+
+      if (purchase.variantId) {
+        const product = await Product.findOne({
+          _id: purchase.product,
+          user: new Types.ObjectId(userId),
+          'variants._id': purchase.variantId
+        }).session(session);
+        const variant = product?.variants.find(
+          (item) => item._id?.toString() === purchase.variantId?.toString()
+        );
+        if (!product || !variant) throw new CustomError(404, 'Purchase product variant is not found');
+
+        const updatedProduct = await Product.findOneAndUpdate(
+          {
+            _id: product._id,
+            user: new Types.ObjectId(userId),
+            variants: {
+              $elemMatch: { _id: purchase.variantId, stock: { $gte: purchase.quantity } }
+            }
+          },
+          {
+            $inc: {
+              'variants.$.stock': -purchase.quantity,
+              stock: -purchase.quantity
+            }
+          },
+          { new: true, session }
+        );
+        if (!updatedProduct) {
+          throw new CustomError(400, 'Cannot delete this purchase because its stock has already been consumed');
+        }
+
+        const updatedVariant = updatedProduct.variants.find(
+          (item) => item._id?.toString() === purchase.variantId?.toString()
+        );
+        if (!updatedVariant) throw new CustomError(404, 'Purchase product variant is not found');
+        await StockMovement.create(
+          [{
+            user: new Types.ObjectId(userId),
+            product: product._id,
+            variantId: updatedVariant._id,
+            variantSize: updatedVariant.size,
+            variantColor: updatedVariant.color,
+            variantSku: updatedVariant.sku,
+            type: 'adjustment',
+            previousStock: updatedVariant.stock + purchase.quantity,
+            quantityChanged: -purchase.quantity,
+            newStock: updatedVariant.stock,
+            reason: 'Stock removed after purchase deletion',
+            referenceId: purchase._id,
+            performedBy: new Types.ObjectId(userId)
+          }],
+          { session }
+        );
+      }
+
+      await purchase.deleteOne({ session });
+      await session.commitTransaction();
+      return purchase;
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      await session.endSession();
+    }
+  }
+
   /**
    * Read all category of user
    */
   async getAll(userId: string, query: Record<string, unknown>) {
-    const search = query.search ? query.search : '';
+    const search = escapeRegex(getSearchTerm(query.search));
+    const filter = {
+      user: new Types.ObjectId(userId),
+      $or: [{ sellerName: { $regex: search, $options: 'i' } }, { productName: { $regex: search, $options: 'i' } }]
+    };
 
     const data = await this.model.aggregate([
-      {
-        $match: {
-          user: new Types.ObjectId(userId),
-          $or: [{ sellerName: { $regex: search, $options: 'i' } }, { productName: { $regex: search, $options: 'i' } }]
-        }
-      },
+      { $match: filter },
       ...sortAndPaginatePipeline(query)
     ]);
 
-    const totalCount = await this.model.find({ user: userId }).countDocuments();
+    const totalCount = await this.model.countDocuments(filter);
 
     return { data, totalCount };
   }

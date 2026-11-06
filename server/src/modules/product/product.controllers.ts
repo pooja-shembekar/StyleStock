@@ -2,6 +2,7 @@ import httpStatus from 'http-status';
 import asyncHandler from '../../lib/asyncHandler';
 import sendResponse from '../../lib/sendResponse';
 import productServices from './product.services';
+import { getPagination } from '../../lib/queryUtils';
 
 class ProductControllers {
   services = productServices;
@@ -101,11 +102,9 @@ class ProductControllers {
   readAll = asyncHandler(async (req, res) => {
     const result = await this.services.readAll(req.query, req.user._id);
 
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
+    const { page, limit } = getPagination(req.query);
 
     const total = result?.totalCount[0]?.total || 0;
-    const safeLimit = limit > 0 ? limit : 10;
 
     sendResponse(res, {
       success: true,
@@ -113,9 +112,9 @@ class ProductControllers {
       message: 'All products retrieved successfully',
       meta: {
         page,
-        limit: safeLimit,
+        limit,
         total,
-        totalPage: Math.ceil(total / safeLimit) || 1
+        totalPage: Math.ceil(total / limit) || 1
       },
       data: result.data
     });

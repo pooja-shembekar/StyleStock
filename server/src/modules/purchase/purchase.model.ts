@@ -14,7 +14,7 @@ const purchaseSchema = new Schema<IPurchase>(
     quantity: { type: Number, required: true },
     unitPrice: { type: Number, required: true },
     totalPrice: { type: Number, required: true },
-    paid: { type: Number, default: 0 }
+    paid: { type: Number, default: 0, min: 0 }
   },
   { timestamps: true }
 );

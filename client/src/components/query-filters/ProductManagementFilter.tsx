@@ -4,9 +4,9 @@ import {useGetAllCategoriesQuery} from '../../redux/features/management/category
 import {useGetAllBrandsQuery} from '../../redux/features/management/brandApi';
 
 interface ProductManagementFilterProps {
-  query: {name: string; category: string; brand: string; limit: number};
+  query: {name: string; category: string; brand: string; limit: number; minPrice: number; maxPrice: number};
   setQuery: React.Dispatch<
-    React.SetStateAction<{name: string; category: string; brand: string; limit: number}>
+    React.SetStateAction<{name: string; category: string; brand: string; limit: number; minPrice: number; maxPrice: number}>
   >;
 }
 
@@ -31,7 +31,7 @@ const ProductManagementFilter = ({query, setQuery}: ProductManagementFilterProps
             range
             step={100}
             max={20000}
-            defaultValue={[1000, 5000]}
+            value={[query.minPrice, query.maxPrice]}
             onChange={(value) => {
               setQuery((prev) => ({
                 ...prev,

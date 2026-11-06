@@ -7,6 +7,7 @@ import Sale from './sale.model';
 import Product from '../product/product.model';
 import CustomError from '../../errors/customError';
 import StockMovement from '../product/stockMovement.model';
+import { escapeRegex, getSearchTerm } from '../../lib/queryUtils';
 
 class SaleServices extends BaseServices<any> {
   constructor(model: any, modelName: string) {
@@ -249,24 +250,19 @@ class SaleServices extends BaseServices<any> {
    */
   async readAll(query: Record<string, unknown> = {}, userId: string) {
     // const date = query.date ? query.date : null;
-    const search = query.search ? (query.search as string) : '';
+    const search = escapeRegex(getSearchTerm(query.search));
+    const filter = {
+      user: new Types.ObjectId(userId),
+      $or: [{ productName: { $regex: search, $options: 'i' } }, { buyerName: { $regex: search, $options: 'i' } }]
+    };
 
     const data = await this.model.aggregate([
-      {
-        $match: {
-          user: new Types.ObjectId(userId),
-          $or: [{ productName: { $regex: search, $options: 'i' } }, { buyerName: { $regex: search, $options: 'i' } }]
-        }
-      },
+      { $match: filter },
       ...sortAndPaginatePipeline(query)
     ]);
 
     const totalCount = await this.model.aggregate([
-      {
-        $match: {
-          user: new Types.ObjectId(userId)
-        }
-      },
+      { $match: filter },
       {
         $group: {
           _id: null,
@@ -429,12 +425,13 @@ class SaleServices extends BaseServices<any> {
 
   // get single sale
   async read(id: string, userId: string) {
-    await this._isExists(id);
-
-    return this.model.findOne({ user: new Types.ObjectId(userId), _id: id }).populate({
+    if (!Types.ObjectId.isValid(id)) throw new CustomError(400, 'Invalid sale ID');
+    const sale = await this.model.findOne({ user: new Types.ObjectId(userId), _id: id }).populate({
       path: 'product',
       select: '-createdAt -updatedAt -__v'
     });
+    if (!sale) throw new CustomError(404, 'Sale is not found');
+    return sale;
   }
 }
 

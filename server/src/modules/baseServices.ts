@@ -56,11 +56,6 @@ class BaseServices<T extends { user: Types.ObjectId }> {
     return deleted;
   }
 
-  protected async _isExists(id: string) {
-    if (!(await this.model.findById(id))) {
-      throw new CustomError(httpStatus.NOT_FOUND, this.modelName + ' is not found!');
-    }
-  }
 }
 
 export default BaseServices;

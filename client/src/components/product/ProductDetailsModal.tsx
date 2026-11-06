@@ -258,6 +258,13 @@ const ProductDetailsModal = ({
       toastMessage({ icon: 'error', text: 'A product can have up to 12 images.' });
       return;
     }
+    if (files.length > remainingSlots) {
+      toastMessage({
+        icon: 'error',
+        text: `Only ${remainingSlots} more image${remainingSlots === 1 ? '' : 's'} can be added to this product.`,
+      });
+      return;
+    }
     if (files.some((file) => !file.type.startsWith('image/') || file.size > 10 * 1024 * 1024)) {
       toastMessage({ icon: 'error', text: 'Choose image files smaller than 10 MB.' });
       return;
@@ -280,7 +287,7 @@ const ProductDetailsModal = ({
     setIsImageUploading(true);
     try {
       const uploadedImages: string[] = [];
-      for (const file of files.slice(0, remainingSlots)) {
+      for (const file of files) {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('upload_preset', uploadPreset);
