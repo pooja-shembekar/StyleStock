@@ -11,6 +11,6 @@ brandRoutes.use(verifyAuth);
 brandRoutes.post('/', validateRequest(brandValidator.createSchema), brandController.create);
 brandRoutes.get('/', brandController.getAll);
 brandRoutes.delete('/:id', brandController.delete);
-brandRoutes.patch('/:id', validateRequest(brandValidator.updateSchema), brandController.create);
+brandRoutes.patch('/:id', validateRequest(brandValidator.updateSchema), brandController.update);
 
 export default brandRoutes;

@@ -11,6 +11,6 @@ categoryRoutes.use(verifyAuth);
 categoryRoutes.post('/', validateRequest(categoryValidator.createSchema), categoryController.create);
 categoryRoutes.get('/', categoryController.getAll);
 categoryRoutes.delete('/:id', categoryController.delete);
-categoryRoutes.patch('/:id', validateRequest(categoryValidator.updateSchema), categoryController.create);
+categoryRoutes.patch('/:id', validateRequest(categoryValidator.updateSchema), categoryController.update);
 
 export default categoryRoutes;

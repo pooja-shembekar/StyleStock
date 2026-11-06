@@ -56,7 +56,7 @@ class PurchaseController {
 
   // delete
   delete = asyncHandler(async (req, res) => {
-    await this.services.delete(req.params.id);
+    await this.services.delete(req.params.id, req.user._id);
 
     sendResponse(res, {
       success: true,

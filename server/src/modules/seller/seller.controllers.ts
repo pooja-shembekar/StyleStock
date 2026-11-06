@@ -61,7 +61,7 @@ class SellerControllers {
    * update sale
    */
   update = asyncHandler(async (req, res) => {
-    const result = await this.services.update(req.params.id, req.body);
+    const result = await this.services.update(req.params.id, req.body, req.user._id);
 
     sendResponse(res, {
       success: true,
@@ -75,7 +75,7 @@ class SellerControllers {
    * delete sale
    */
   delete = asyncHandler(async (req, res) => {
-    await this.services.delete(req.params.id);
+    await this.services.delete(req.params.id, req.user._id);
 
     sendResponse(res, {
       success: true,

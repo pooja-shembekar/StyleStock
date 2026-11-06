@@ -15,6 +15,11 @@ userRoutes.post(
   validateRequest(userValidator.changePasswordSchema),
   userControllers.changePassword
 );
-userRoutes.patch('/', verifyAuth, userControllers.updateProfile);
+userRoutes.patch(
+  '/',
+  verifyAuth,
+  validateRequest(userValidator.updatedProfileSchema),
+  userControllers.updateProfile
+);
 
 export default userRoutes;
