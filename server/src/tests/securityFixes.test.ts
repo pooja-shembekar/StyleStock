@@ -703,8 +703,15 @@ test('health routes distinguish liveness from database readiness and preserve 40
 
     const readiness = await fetch(`${url}/api/v1/health`);
     assert.ok([200, 503].includes(readiness.status));
-    const readinessBody = await readiness.json() as Record<string, unknown>;
-    assert.equal(readinessBody.status, readiness.status === 200 ? 'ready' : 'not_ready');
+    const readinessBody = await readiness.json() as {
+      success: boolean;
+      statusCode: number;
+      message: string;
+      database: string;
+    };
+    assert.equal(readinessBody.statusCode, readiness.status);
+    assert.equal(readinessBody.database, readiness.status === 200 ? 'connected' : 'disconnected');
+    assert.equal(readinessBody.success, readiness.status === 200);
     assert.equal('stack' in readinessBody, false);
     assert.equal('database_url' in readinessBody, false);
 
@@ -740,6 +747,50 @@ test('health routes distinguish liveness from database readiness and preserve 40
     assert.equal(blockedOrigin.status, 403);
   } finally {
     await close(server);
+  }
+});
+
+test('public versioned health endpoint returns 200 when MongoDB responds to ping', async () => {
+  const restoreReadyState = replaceProperty(mongoose.connection, 'readyState', 1);
+  const restoreDb = replaceProperty(mongoose.connection, 'db', {
+    admin: () => ({ ping: async () => ({ ok: 1 }) })
+  });
+  const { server, url } = await listen(app);
+
+  try {
+    const response = await fetch(`${url}/api/v1/health`);
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      success: true,
+      statusCode: 200,
+      message: 'Health check passed',
+      database: 'connected'
+    });
+  } finally {
+    await close(server);
+    restoreDb();
+    restoreReadyState();
+  }
+});
+
+test('public versioned health endpoint returns 503 when MongoDB is disconnected', async () => {
+  const restoreReadyState = replaceProperty(mongoose.connection, 'readyState', 0);
+  const restoreDb = replaceProperty(mongoose.connection, 'db', undefined);
+  const { server, url } = await listen(app);
+
+  try {
+    const response = await fetch(`${url}/api/v1/health`);
+    assert.equal(response.status, 503);
+    assert.deepEqual(await response.json(), {
+      success: false,
+      statusCode: 503,
+      message: 'Database is unavailable',
+      database: 'disconnected'
+    });
+  } finally {
+    await close(server);
+    restoreDb();
+    restoreReadyState();
   }
 });
 

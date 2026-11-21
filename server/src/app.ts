@@ -1,6 +1,5 @@
 import cors from 'cors';
 import express, { Application } from 'express';
-import mongoose from 'mongoose';
 import morgan from 'morgan';
 import rootRouter from './routes';
 import notFound from './middlewares/notFound';
@@ -35,30 +34,6 @@ const livenessResponse = (_req: express.Request, res: express.Response) =>
 
 app.get('/', livenessResponse);
 app.get('/health', livenessResponse);
-app.get('/api/v1/health', async (_req, res) => {
-  try {
-    if (mongoose.connection.readyState !== 1 || !mongoose.connection.db) {
-      return res.status(503).json({
-        success: false,
-        status: 'not_ready',
-        database: 'disconnected'
-      });
-    }
-
-    await mongoose.connection.db.admin().ping();
-    return res.status(200).json({
-      success: true,
-      status: 'ready',
-      database: 'connected'
-    });
-  } catch {
-    return res.status(503).json({
-      success: false,
-      status: 'not_ready',
-      database: 'disconnected'
-    });
-  }
-});
 
 // application routes
 app.use('/api/v1', rootRouter);
