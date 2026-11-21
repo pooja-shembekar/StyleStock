@@ -3,7 +3,7 @@ import { after, test } from 'node:test';
 import express, { Router } from 'express';
 import { FilterQuery, Schema, Types, model } from 'mongoose';
 import jwt from 'jsonwebtoken';
-import config from '../config';
+import config, { assertRuntimeConfig, getClientOrigin } from '../config';
 import globalErrorHandler from '../middlewares/globalErrorhandler';
 import validateRequest from '../middlewares/validateRequest';
 import BaseServices from '../modules/baseServices';
@@ -329,8 +329,167 @@ test('sale and purchase validators match fields their services actually persist'
     buyerName: 'Buyer',
     date: '2025-02-31'
   }).success, false);
+  assert.equal(saleValidator.createSchema.safeParse({
+    product: productId,
+    variantId,
+    quantity: 2,
+    buyerName: 'Buyer'
+  }).success, false);
+  assert.equal(saleValidator.createSchema.safeParse({
+    product: productId,
+    variantId: 'not-an-object-id',
+    quantity: 2,
+    buyerName: 'Buyer',
+    date: '2025-01-31'
+  }).success, false);
   assert.deepEqual(purchaseValidator.updateSchema.parse({ paid: 10 }), { paid: 10 });
   assert.equal(purchaseValidator.updateSchema.safeParse({ seller: productId }).success, false);
+});
+
+function mockSaleCreation(initialStock: number, failSaleCreation = false) {
+  const userId = new Types.ObjectId();
+  const productId = new Types.ObjectId();
+  const variantId = new Types.ObjectId();
+  const saleId = new Types.ObjectId();
+  let stock = initialStock;
+  let aggregateStock = initialStock;
+  let updateCalls = 0;
+  let saleCreateCalls = 0;
+  let movementCreateCalls = 0;
+  let committed = false;
+  let aborted = false;
+  let createdSale: Record<string, unknown> | undefined;
+  const product = {
+    _id: productId,
+    name: 'Test product',
+    price: 12,
+    variants: [{ _id: variantId, size: 'M', color: 'Black', stock: initialStock, sku: 'TEST-M' }]
+  };
+  const session = {
+    startTransaction() {},
+    async commitTransaction() { committed = true; },
+    async abortTransaction() {
+      aborted = true;
+      stock = initialStock;
+      aggregateStock = initialStock;
+    },
+    async endSession() {}
+  };
+
+  const restores = [
+    replaceProperty(mongoose, 'startSession', async () => session),
+    replaceProperty(Product, 'findOne', () => ({ session: async () => product })),
+    replaceProperty(
+      Product,
+      'findOneAndUpdate',
+      (
+        filter: { variants: { $elemMatch: { stock: { $gte: number } } } },
+        update: { $inc: Record<string, number> }
+      ) => {
+        updateCalls += 1;
+        const minimumStock = filter.variants.$elemMatch.stock.$gte;
+        if (stock < minimumStock) return Promise.resolve(null);
+        stock += update.$inc['variants.$.stock'];
+        aggregateStock += update.$inc.stock;
+        return Promise.resolve({ _id: productId });
+      }
+    ),
+    replaceProperty(saleServices['model'], 'create', async (documents: Array<Record<string, unknown>>) => {
+      saleCreateCalls += 1;
+      if (failSaleCreation) throw new Error('Simulated sale persistence failure');
+      createdSale = { _id: saleId, ...documents[0] };
+      return [createdSale];
+    }),
+    replaceProperty(StockMovement, 'create', async () => {
+      movementCreateCalls += 1;
+    })
+  ];
+
+  return {
+    userId,
+    productId,
+    variantId,
+    get stock() { return stock; },
+    get aggregateStock() { return aggregateStock; },
+    get updateCalls() { return updateCalls; },
+    get saleCreateCalls() { return saleCreateCalls; },
+    get movementCreateCalls() { return movementCreateCalls; },
+    get committed() { return committed; },
+    get aborted() { return aborted; },
+    get createdSale() { return createdSale; },
+    restore() { restores.reverse().forEach((restore) => restore()); }
+  };
+}
+
+test('sale creation rejects insufficient variant stock without changing stock', async () => {
+  const mock = mockSaleCreation(4);
+  try {
+    await assert.rejects(
+      saleServices.create({
+        product: mock.productId.toString(),
+        variantId: mock.variantId.toString(),
+        quantity: 5,
+        buyerName: 'Buyer',
+        date: '2025-01-31'
+      }, mock.userId.toString()),
+      (error: unknown) => error instanceof CustomError && error.statusCode === 400
+    );
+    assert.equal(mock.stock, 4);
+    assert.equal(mock.aggregateStock, 4);
+    assert.equal(mock.saleCreateCalls, 0);
+    assert.equal(mock.committed, false);
+    assert.equal(mock.aborted, true);
+  } finally {
+    mock.restore();
+  }
+});
+
+test('failed sale persistence rolls back the stock deduction', async () => {
+  const mock = mockSaleCreation(10, true);
+  try {
+    await assert.rejects(
+      saleServices.create({
+        product: mock.productId.toString(),
+        variantId: mock.variantId.toString(),
+        quantity: 3,
+        buyerName: 'Buyer',
+        date: '2025-01-31'
+      }, mock.userId.toString()),
+      /Simulated sale persistence failure/
+    );
+    assert.equal(mock.stock, 10);
+    assert.equal(mock.aggregateStock, 10);
+    assert.equal(mock.saleCreateCalls, 1);
+    assert.equal(mock.movementCreateCalls, 0);
+    assert.equal(mock.committed, false);
+    assert.equal(mock.aborted, true);
+  } finally {
+    mock.restore();
+  }
+});
+
+test('successful sale persists once and decrements variant and aggregate stock once', async () => {
+  const mock = mockSaleCreation(20);
+  try {
+    await saleServices.create({
+      product: mock.productId.toString(),
+      variantId: mock.variantId.toString(),
+      quantity: 7,
+      buyerName: 'Buyer',
+      date: '2025-01-31'
+    }, mock.userId.toString());
+    assert.equal(mock.updateCalls, 1);
+    assert.equal(mock.stock, 13);
+    assert.equal(mock.aggregateStock, 13);
+    assert.equal(mock.saleCreateCalls, 1);
+    assert.equal(mock.movementCreateCalls, 1);
+    assert.equal(mock.createdSale?.productPrice, 12);
+    assert.equal(mock.createdSale?.totalPrice, 84);
+    assert.equal(mock.committed, true);
+    assert.equal(mock.aborted, false);
+  } finally {
+    mock.restore();
+  }
 });
 
 test('change-password verifies the old password and persists only a bcrypt hash', async () => {
@@ -581,6 +740,69 @@ test('health routes distinguish liveness from database readiness and preserve 40
     assert.equal(blockedOrigin.status, 403);
   } finally {
     await close(server);
+  }
+});
+
+test('production runtime config allows startup without CLIENT_URL and keeps no CORS origin', () => {
+  const original = {
+    nodeEnv: config.nodeEnv,
+    database_url: config.database_url,
+    jwt_secret: config.jwt_secret,
+    client_url: config.client_url
+  };
+  config.nodeEnv = 'production';
+  config.database_url = 'mongodb+srv://cluster.example.mongodb.net/style-stock';
+  config.jwt_secret = 'runtime-config-test-secret';
+  config.client_url = undefined;
+
+  try {
+    assert.doesNotThrow(assertRuntimeConfig);
+    assert.equal(getClientOrigin(), undefined);
+  } finally {
+    Object.assign(config, original);
+  }
+});
+
+test('runtime config rejects malformed MongoDB connection URIs without echoing them', () => {
+  const original = {
+    nodeEnv: config.nodeEnv,
+    database_url: config.database_url,
+    jwt_secret: config.jwt_secret
+  };
+  const invalidDatabaseUrl = 'not-a-mongodb-uri-with-secret';
+  config.nodeEnv = 'production';
+  config.database_url = invalidDatabaseUrl;
+  config.jwt_secret = 'runtime-config-test-secret';
+
+  try {
+    assert.throws(assertRuntimeConfig, (error: unknown) => {
+      assert.ok(error instanceof Error);
+      assert.match(error.message, /DATABASE_URL must be a valid MongoDB connection URI/);
+      assert.equal(error.message.includes(invalidDatabaseUrl), false);
+      return true;
+    });
+  } finally {
+    Object.assign(config, original);
+  }
+});
+
+test('configured CLIENT_URL must be an HTTPS origin', () => {
+  const original = {
+    nodeEnv: config.nodeEnv,
+    database_url: config.database_url,
+    jwt_secret: config.jwt_secret,
+    client_url: config.client_url
+  };
+  config.nodeEnv = 'production';
+  config.database_url = 'mongodb+srv://cluster.example.mongodb.net/style-stock';
+  config.jwt_secret = 'runtime-config-test-secret';
+  config.client_url = 'http://frontend.example';
+
+  try {
+    assert.equal(getClientOrigin(), undefined);
+    assert.throws(assertRuntimeConfig, /CLIENT_URL must be a valid HTTPS origin/);
+  } finally {
+    Object.assign(config, original);
   }
 });
 

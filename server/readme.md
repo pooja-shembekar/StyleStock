@@ -33,7 +33,11 @@
     PORT=5000
     DATABASE_URL=
     JWT_SECRET=your_jwt_secret
+    # Optional: HTTPS origin for the deployed frontend
+    # CLIENT_URL=https://your-frontend.example
   ```
+
+- `CLIENT_URL` is optional, so the backend can run before the frontend is deployed. If set, it must be an HTTPS origin; only that exact origin is allowed by CORS. In production, leaving it unset means browser origins are not allowlisted.
 
 - Step 2: install all the dependencies using the command
   ```bash
