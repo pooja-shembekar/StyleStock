@@ -3,7 +3,12 @@ import { after, test } from 'node:test';
 import express, { Router } from 'express';
 import { FilterQuery, Schema, Types, model } from 'mongoose';
 import jwt from 'jsonwebtoken';
-import config, { assertRuntimeConfig, getClientOrigin } from '../config';
+import config, {
+  assertRuntimeConfig,
+  getAdditionalCorsOrigins,
+  getClientOrigin,
+  hasInvalidCorsOrigins
+} from '../config';
 import globalErrorHandler from '../middlewares/globalErrorhandler';
 import validateRequest from '../middlewares/validateRequest';
 import BaseServices from '../modules/baseServices';
@@ -734,19 +739,92 @@ test('health routes distinguish liveness from database readiness and preserve 40
     assert.equal(invalidJson.status, 400);
     assert.equal((await invalidJson.json()).message, 'Invalid JSON request body');
 
-    const allowedOrigin = config.client_url
-      ? new URL(config.client_url).origin
-      : config.nodeEnv === 'production' ? undefined : 'http://localhost:5173';
-    if (allowedOrigin) {
-      const allowedResponse = await fetch(`${url}/health`, { headers: { origin: allowedOrigin } });
-      assert.equal(allowedResponse.headers.get('access-control-allow-origin'), allowedOrigin);
+  } finally {
+    await close(server);
+  }
+});
+
+test('CORS allows configured and local origins, rejects others, and handles preflight', async () => {
+  const original = {
+    nodeEnv: config.nodeEnv,
+    client_url: config.client_url,
+    cors_origins: config.cors_origins
+  };
+  config.nodeEnv = 'production';
+  config.client_url = 'https://stylestock.vercel.app';
+  config.cors_origins = ' https://admin.example.com/ , https://shop.example.com ';
+  const { server, url } = await listen(app);
+
+  try {
+    for (const origin of [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      'https://stylestock.vercel.app',
+      'https://admin.example.com',
+      'https://shop.example.com'
+    ]) {
+      const response = await fetch(`${url}/health`, { headers: { origin } });
+      assert.equal(response.headers.get('access-control-allow-origin'), origin);
     }
+
+    const preflight = await fetch(`${url}/api/v1/users/register`, {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'http://localhost:5173',
+        'access-control-request-method': 'POST',
+        'access-control-request-headers': 'content-type,authorization'
+      }
+    });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get('access-control-allow-origin'), 'http://localhost:5173');
+    assert.match(preflight.headers.get('access-control-allow-methods') ?? '', /\bPOST\b/);
+    const allowedHeaders = (preflight.headers.get('access-control-allow-headers') ?? '')
+      .split(',')
+      .map((header) => header.trim().toLowerCase());
+    assert.ok(allowedHeaders.includes('content-type'));
+    assert.ok(allowedHeaders.includes('authorization'));
+
     const blockedOrigin = await fetch(`${url}/health`, {
       headers: { origin: 'https://unauthorized-origin.example' }
     });
     assert.equal(blockedOrigin.status, 403);
+    assert.equal(blockedOrigin.headers.get('access-control-allow-origin'), null);
+
+    const nonCanonicalOrigin = await fetch(`${url}/health`, {
+      headers: { origin: 'http://localhost:5173/' }
+    });
+    assert.equal(nonCanonicalOrigin.status, 403);
   } finally {
     await close(server);
+    Object.assign(config, original);
+  }
+});
+
+test('production CLIENT_URL is trimmed and normalized as an allowed origin', async () => {
+  const original = {
+    nodeEnv: config.nodeEnv,
+    client_url: config.client_url,
+    cors_origins: config.cors_origins
+  };
+  config.nodeEnv = 'production';
+  config.client_url = ' https://stylestock.vercel.app/ ';
+  config.cors_origins = '';
+  const { server, url } = await listen(app);
+
+  try {
+    const response = await fetch(`${url}/api/v1/users/register`, {
+      method: 'OPTIONS',
+      headers: {
+        origin: 'https://stylestock.vercel.app',
+        'access-control-request-method': 'POST',
+        'access-control-request-headers': 'content-type,authorization'
+      }
+    });
+    assert.equal(response.status, 204);
+    assert.equal(response.headers.get('access-control-allow-origin'), 'https://stylestock.vercel.app');
+  } finally {
+    await close(server);
+    Object.assign(config, original);
   }
 });
 
@@ -794,7 +872,7 @@ test('public versioned health endpoint returns 503 when MongoDB is disconnected'
   }
 });
 
-test('production runtime config allows startup without CLIENT_URL and keeps no CORS origin', () => {
+test('production runtime config allows startup without CLIENT_URL', () => {
   const original = {
     nodeEnv: config.nodeEnv,
     database_url: config.database_url,
@@ -854,6 +932,25 @@ test('configured CLIENT_URL must be an HTTPS origin', () => {
     assert.throws(assertRuntimeConfig, /CLIENT_URL must be a valid HTTPS origin/);
   } finally {
     Object.assign(config, original);
+  }
+});
+
+test('CORS_ORIGINS trims valid origins and rejects invalid origin entries', () => {
+  const original = config.cors_origins;
+  config.cors_origins = ' https://shop.example.com/ , http://localhost:3001 ';
+  try {
+    assert.deepEqual(getAdditionalCorsOrigins(), [
+      'https://shop.example.com',
+      'http://localhost:3001'
+    ]);
+    assert.equal(hasInvalidCorsOrigins(), false);
+
+    config.cors_origins = 'https://valid.example.com, https://invalid.example.com/path, *';
+    assert.deepEqual(getAdditionalCorsOrigins(), ['https://valid.example.com']);
+    assert.equal(hasInvalidCorsOrigins(), true);
+    assert.throws(assertRuntimeConfig, /CORS_ORIGINS must contain only valid HTTPS or localhost HTTP origins/);
+  } finally {
+    config.cors_origins = original;
   }
 });
 

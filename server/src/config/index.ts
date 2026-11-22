@@ -8,7 +8,8 @@ const config = {
   port: Number(process.env.PORT ?? 5000),
   database_url: process.env.DATABASE_URL,
   jwt_secret: process.env.JWT_SECRET,
-  client_url: process.env.CLIENT_URL
+  client_url: process.env.CLIENT_URL,
+  cors_origins: process.env.CORS_ORIGINS
 };
 
 type ValidatedRuntimeConfig = typeof config & {
@@ -53,6 +54,9 @@ export function assertRuntimeConfig(): ValidatedRuntimeConfig {
   if (config.client_url?.trim() && !getClientOrigin()) {
     throw new RuntimeConfigError('CLIENT_URL must be a valid HTTPS origin');
   }
+  if (hasInvalidCorsOrigins()) {
+    throw new RuntimeConfigError('CORS_ORIGINS must contain only valid HTTPS or localhost HTTP origins');
+  }
   if (!Number.isInteger(config.port) || config.port < 1 || config.port > 65535) {
     throw new RuntimeConfigError('PORT must be an integer between 1 and 65535');
   }
@@ -83,6 +87,42 @@ export function getClientOrigin() {
   } catch {
     return undefined;
   }
+}
+
+function validateCorsOrigin(value: string): string | undefined {
+  try {
+    const url = new URL(value.trim());
+    const isLocalhost = ['localhost', '127.0.0.1', '[::1]'].includes(url.hostname.toLowerCase());
+    if (
+      url.origin === 'null' ||
+      url.username ||
+      url.password ||
+      url.pathname !== '/' ||
+      url.search ||
+      url.hash ||
+      (url.protocol !== 'https:' && !(url.protocol === 'http:' && isLocalhost))
+    ) return undefined;
+    return url.origin;
+  } catch {
+    return undefined;
+  }
+}
+
+function configuredCorsOrigins() {
+  return (config.cors_origins ?? '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+}
+
+export function getAdditionalCorsOrigins(): string[] {
+  return configuredCorsOrigins()
+    .map(validateCorsOrigin)
+    .filter((origin): origin is string => Boolean(origin));
+}
+
+export function hasInvalidCorsOrigins(): boolean {
+  return configuredCorsOrigins().some((origin) => !validateCorsOrigin(origin));
 }
 
 export default config;
